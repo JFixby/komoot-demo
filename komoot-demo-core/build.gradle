@@ -23,7 +23,7 @@ dependencies {
 	         //compile 'com.github.Scarabei.Scarabei:scarabei-apache-cmns:-SNAPSHOT'
 	         testCompile 'junit:junit:4.10'
 	         // https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk
-             //compile group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.11.103'
+             compile group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.11.103'
 
 }	
 	
