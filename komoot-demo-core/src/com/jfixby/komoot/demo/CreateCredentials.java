@@ -9,6 +9,7 @@ import com.jfixby.scarabei.api.file.File;
 import com.jfixby.scarabei.api.file.LocalFileSystem;
 import com.jfixby.scarabei.api.json.Json;
 import com.jfixby.scarabei.api.log.L;
+import com.jfixby.scarabei.api.sys.Sys;
 import com.jfixby.scarabei.gson.GoogleGson;
 
 public class CreateCredentials {
@@ -21,7 +22,7 @@ public class CreateCredentials {
 
 		credentials.secretKeyID = "secretKeyID";
 		credentials.regionName = "regionName";
-		credentials.accessKeyID = "accessKeyID";
+		credentials.accessKeyID = "accessKeyID-" + Sys.SystemTime().currentTimeMillis();
 
 		final File awsCredentialsFile = LocalFileSystem.ApplicationHome().parent().child("komoot-demo-config").child("credentials")
 			.child("aws-credentials.json");
