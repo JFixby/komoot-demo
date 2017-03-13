@@ -16,6 +16,7 @@ import com.jfixby.scarabei.api.file.LocalFileSystem;
 import com.jfixby.scarabei.api.json.Json;
 import com.jfixby.scarabei.api.json.JsonString;
 import com.jfixby.scarabei.api.log.L;
+import com.jfixby.scarabei.api.md5.MD5;
 import com.jfixby.scarabei.aws.api.AWS;
 import com.jfixby.scarabei.aws.api.AWSCredentialsProvider;
 import com.jfixby.scarabei.aws.api.sqs.SQS;
@@ -59,7 +60,10 @@ public class RunSubscribeSQS {
 
 			try {
 				final SrlzNotification srlzd_notification = readNotification(body);
+
 				final Notification notification = new Notification();
+				notification.put("user_id", srlzd_notification.user_id);
+
 				notification.put("timestamp", srlzd_notification.timestamp);
 				notification.put("name", srlzd_notification.name);
 				notification.put("email", srlzd_notification.email);
@@ -85,11 +89,18 @@ public class RunSubscribeSQS {
 
 		try {
 			final SrlzNotification notification = Json.deserializeFromString(SrlzNotification.class, msgBody.Message);
+			if (notification.user_id == null || "".equals(notification.user_id)) {
+				notification.user_id = generateFakeUserID(notification.email);
+			}
 			return notification;
 		} catch (final Throwable e) {
 			throw new FailedToReadNotificationJsonException("failed to read json: " + msgBody.Message, e);
 		}
 
+	}
+
+	private static String generateFakeUserID (final String email) {
+		return MD5.md5String(email).getHumanReadableMD5HashHexString().toUpperCase() + "-" + email;
 	}
 
 }
