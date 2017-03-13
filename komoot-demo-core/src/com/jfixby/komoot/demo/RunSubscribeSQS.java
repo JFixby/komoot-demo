@@ -4,6 +4,10 @@ package com.jfixby.komoot.demo;
 import java.io.IOException;
 
 import com.jfixby.komoot.demo.credentials.AWSCredentials;
+import com.jfixby.komoot.sns.FailedToReadNotificationJsonException;
+import com.jfixby.komoot.sns.Notification;
+import com.jfixby.komoot.sns.io.SrlzMessageBody;
+import com.jfixby.komoot.sns.io.SrlzNotification;
 import com.jfixby.scarabei.amazon.aws.RedAWS;
 import com.jfixby.scarabei.api.collections.Collection;
 import com.jfixby.scarabei.api.desktop.ScarabeiDesktop;
@@ -11,6 +15,7 @@ import com.jfixby.scarabei.api.file.File;
 import com.jfixby.scarabei.api.file.LocalFileSystem;
 import com.jfixby.scarabei.api.json.Json;
 import com.jfixby.scarabei.api.json.JsonString;
+import com.jfixby.scarabei.api.log.L;
 import com.jfixby.scarabei.aws.api.AWS;
 import com.jfixby.scarabei.aws.api.AWSCredentialsProvider;
 import com.jfixby.scarabei.aws.api.sqs.SQS;
@@ -49,7 +54,40 @@ public class RunSubscribeSQS {
 
 		final Collection<SQSMessage> messages = result.listMessages();
 		for (final SQSMessage m : messages) {
-			m.print();
+// m.print();
+			final String body = m.getBody();
+
+			try {
+				final SrlzNotification srlzd_notification = readNotification(body);
+				final Notification notification = new Notification();
+				notification.put("timestamp", srlzd_notification.timestamp);
+				notification.put("name", srlzd_notification.name);
+				notification.put("email", srlzd_notification.email);
+				notification.put("message", srlzd_notification.message);
+// L.d("notification", Json.serializeToString(srlzd_notification));
+				notification.print("notification");
+
+			} catch (final FailedToReadNotificationJsonException e) {
+				L.e(e);
+			}
+
+		}
+
+	}
+
+	private static SrlzNotification readNotification (final String body) throws FailedToReadNotificationJsonException {
+		SrlzMessageBody msgBody;
+		try {
+			msgBody = Json.deserializeFromString(SrlzMessageBody.class, body);
+		} catch (final Throwable e) {
+			throw new FailedToReadNotificationJsonException("failed to read json: " + body, e);
+		}
+
+		try {
+			final SrlzNotification notification = Json.deserializeFromString(SrlzNotification.class, msgBody.Message);
+			return notification;
+		} catch (final Throwable e) {
+			throw new FailedToReadNotificationJsonException("failed to read json: " + msgBody.Message, e);
 		}
 
 	}
