@@ -20,7 +20,7 @@ import com.jfixby.scarabei.aws.api.sns.SNSTopicSunscribeRequest;
 import com.jfixby.scarabei.aws.api.sns.SNSTopicSunscribeRequestParams;
 import com.jfixby.scarabei.gson.GoogleGson;
 
-public class RunSubscribe {
+public class RunSubscribeSNS {
 
 	public static void main (final String[] args) throws IOException {
 		ScarabeiDesktop.deploy();
@@ -30,7 +30,7 @@ public class RunSubscribe {
 
 		final SNS sns = AWS.getSNS();
 
-		final SNSClientSpecs cientSpecs = sns.newSunscribeSpecs();
+		final SNSClientSpecs cientSpecs = sns.newClientSpecs();
 
 		final File awsCredentialsFile = LocalFileSystem.ApplicationHome().parent().child("komoot-demo-config").child("credentials")
 			.child("aws-credentials.json");
@@ -41,14 +41,15 @@ public class RunSubscribe {
 
 		final SNSClient snsClient = sns.newClient(cientSpecs);
 
-		final SNSTopicSunscribeRequestParams params = snsClient.newSunscribeParams();
+		final SNSTopicSunscribeRequestParams params = snsClient.newSubscribeParams();
 		params.setRegion(awsKeys.getRegionName());
-// params.setTopicARN("arn:aws:sns:eu-west-1:963797398573:challenge-notifications");
-		params.setTopicARN("arn:aws:sns:eu-central-1:642548582501:test");
+		params.setTopicARN("arn:aws:sns:eu-west-1:963797398573:challenge-notifications");
+// params.setTopicARN("arn:aws:sns:eu-central-1:642548582501:test");
 
 		params.setProtocol("https");
+		params.setEndPoint("https://sqs.eu-central-1.amazonaws.com/642548582501/komoot");
 
-		final SNSTopicSunscribeRequest requrest = snsClient.sunscribe(params);
+		final SNSTopicSunscribeRequest requrest = snsClient.subscribe(params);
 
 	}
 
