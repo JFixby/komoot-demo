@@ -17,10 +17,15 @@ import com.jfixby.scarabei.aws.api.AWSCredentialsProvider;
 import com.jfixby.scarabei.aws.api.sqs.SQS;
 import com.jfixby.scarabei.aws.api.sqs.SQSClienSpecs;
 import com.jfixby.scarabei.aws.api.sqs.SQSClient;
+import com.jfixby.scarabei.aws.api.sqs.SQSCreateQueueParams;
+import com.jfixby.scarabei.aws.api.sqs.SQSCreateQueueResult;
+import com.jfixby.scarabei.aws.api.sqs.SQSDeleteMessageParams;
+import com.jfixby.scarabei.aws.api.sqs.SQSDeleteMessageResult;
 import com.jfixby.scarabei.aws.api.sqs.SQSMessage;
-import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageRequest;
 import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageParams;
+import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageRequest;
 import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageResult;
+import com.jfixby.scarabei.aws.api.sqs.SQSSendMessageParams;
 
 public class NotificationsSeparator {
 
@@ -30,7 +35,7 @@ public class NotificationsSeparator {
 	AWSCredentialsProvider awsKeys;
 	private StateSwitcher<SEPARATOR_STATE> state;
 	private SQSClient client;
-	private String queueURL;
+	private String inputQueueURL;
 
 	private NotificationsSeparator (final NotificationsSeparatorSpecs specs) {
 		this.awsKeys = specs.getAWSCredentialsProvider();
@@ -39,7 +44,7 @@ public class NotificationsSeparator {
 		final SQSClienSpecs sqsspecs = sqs.newSQSClienSpecs();
 		this.awsKeys = Debug.checkNull("AWSCredentialsProvider", specs.getAWSCredentialsProvider());
 		sqsspecs.setAWSCredentialsProvider(this.awsKeys);
-		this.queueURL = Debug.checkNull("queueURL", specs.getInputQueueURL());
+		this.inputQueueURL = Debug.checkNull("queueURL", specs.getInputQueueURL());
 
 		this.client = sqs.newClient(sqsspecs);
 	}
@@ -63,10 +68,10 @@ public class NotificationsSeparator {
 
 	private void separate () {
 
-		final SQS sqs = AWS.getSQS();
 		while (true) {
+			final SQS sqs = AWS.getSQS();
 			final SQSReceiveMessageParams params = sqs.newReceiveMessageParams();
-			params.setQueueURL(this.queueURL);
+			params.setQueueURL(this.inputQueueURL);
 			final SQSReceiveMessageRequest request = sqs.newReceiveMessageRequest(params);
 
 			final SQSReceiveMessageResult result = this.client.receive(request);
@@ -74,22 +79,8 @@ public class NotificationsSeparator {
 			final Collection<SQSMessage> messages = result.listMessages();
 			for (final SQSMessage m : messages) {
 // m.print();
-				final String body = m.getBody();
-
 				try {
-					final SrlzNotification srlzd_notification = readNotification(body);
-
-					final Notification notification = new Notification();
-					notification.put("user_id", srlzd_notification.user_id);
-
-					notification.put("timestamp", srlzd_notification.timestamp);
-					notification.put("name", srlzd_notification.name);
-					notification.put("email", srlzd_notification.email);
-					notification.put("message", srlzd_notification.message);
-// L.d("notification", Json.serializeToString(srlzd_notification));
-					notification.print("messagess processed: " + this.messagessProcessed);
-					this.messagessProcessed++;
-
+					this.processBody(m);
 				} catch (final FailedToReadNotificationJsonException e) {
 					L.e(e);
 				}
@@ -97,6 +88,55 @@ public class NotificationsSeparator {
 			}
 		}
 
+	}
+
+	private void processBody (final SQSMessage inputMessage) throws FailedToReadNotificationJsonException {
+		final String inputMessageBody = inputMessage.getBody();
+		final String inputMessageReceiptHandle = inputMessage.getReceiptHandle();
+
+		final SrlzNotification srlzd_notification = readNotification(inputMessageBody);
+		final SQS sqs = AWS.getSQS();
+		final Notification notification = new Notification();
+		notification.put("user_id", srlzd_notification.user_id);
+		notification.put("timestamp", srlzd_notification.timestamp);
+		notification.put("name", srlzd_notification.name);
+		notification.put("email", srlzd_notification.email);
+		notification.put("message", srlzd_notification.message);
+// L.d("notification", Json.serializeToString(srlzd_notification));
+		notification.print("messagess processed: " + this.messagessProcessed);
+		this.messagessProcessed++;
+
+		final String queueName = this.queueName(srlzd_notification.user_id);
+		L.d("new queue", queueName + " " + queueName.length());
+		final SQSCreateQueueParams createQueueRequestParams = sqs.newCreateQueueParams();
+		createQueueRequestParams.setName(queueName);
+
+		final SQSCreateQueueResult queueCreateResult = this.client.createQueue(createQueueRequestParams);
+		final String queuURL = queueCreateResult.getQueueURL();
+		L.d("creating queue", queuURL);
+
+		final SQSSendMessageParams sendParams = sqs.newSendMessageParams();
+		sendParams.setQueueURL(queuURL);
+		final String messageText = inputMessageBody;
+		sendParams.setBody(messageText);
+
+		this.client.sendMessage(sendParams);
+
+		final SQSDeleteMessageParams delete = sqs.newDeleteMessageParams();
+		delete.setQueueURL(this.inputQueueURL);
+		delete.setMessageReceiptHandle(inputMessageReceiptHandle);
+		final SQSDeleteMessageResult deleteResult = this.client.deleteMessage(delete);
+
+	}
+
+	private String queueName (final String user_id) {
+		Debug.checkNull("user_id", user_id);
+		if (user_id == null) {
+			return null;
+		}
+		final String result = "komoot-usr-mailbox-"
+			+ user_id.replaceAll(":", "").replaceAll("@", "-").replaceAll("\\+", "-").replaceAll("\\.", "-");
+		return result;
 	}
 
 	private static SrlzNotification readNotification (final String body) throws FailedToReadNotificationJsonException {
