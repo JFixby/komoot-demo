@@ -42,8 +42,12 @@ public class DigestEmail {
 
 	private String date (final Notification n) {
 		final long timestamp = n.getTimeStamp();
+		return formatDate(timestamp);
+	}
+
+	public static String formatDate (final long timestamp) {
 		final Date date = new Date(timestamp);
-		final SimpleDateFormat format = new SimpleDateFormat("EEEE,HH:mm");
+		final SimpleDateFormat format = new SimpleDateFormat("EEEE, HH:mm");
 		return format.format(date);
 	}
 

@@ -24,6 +24,11 @@ import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageResult;
 
 public class DigestProducer {
 
+	@Override
+	public String toString () {
+		return "DigestProducer [uid=" + this.uid + "]";
+	}
+
 	private final StateSwitcher<DIGEST_PRODUCER_STATE> state;
 	private final UserID uid;
 	private final String inputQueueURL;
@@ -51,7 +56,10 @@ public class DigestProducer {
 	public void start () {
 		this.state.expectState(DIGEST_PRODUCER_STATE.NEW);
 		this.state.switchState(DIGEST_PRODUCER_STATE.WORKING);
+		this.workerThread.start();
 	}
+
+	long max_messages_per_digest = 10;
 
 	private void work () {
 		L.d("Digest producer is listening", this.inputQueueURL);
@@ -66,8 +74,12 @@ public class DigestProducer {
 			final SQSReceiveMessageResult result = client.receive(request);
 
 			final Collection<SQSMessage> messages = result.listMessages();
-			if (messages.size() == 0) {// no more input notifications
+			if (this.localMessagesQueue.size() >= this.max_messages_per_digest) {
 				this.processDigest();
+			} else if (messages.size() == 0) {// no more input
+				// notifications
+				this.processDigest();
+				L.d("Digest[" + this + "] is going to sleep.");
 				Sys.sleep(TimeStream.HOUR);
 				return;
 			}
@@ -121,6 +133,10 @@ public class DigestProducer {
 		notification.setUserName(srlzd_notification.name);
 
 		final SQS sqs = AWS.getSQS();
+
+		this.localMessagesQueue.enqueue(notification);
+		L.d(this + " received", notification);
+
 		this.messagessProcessed++;
 
 		if (this.deleteInputMessages) {

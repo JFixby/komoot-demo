@@ -104,7 +104,7 @@ public class NotificationsSeparator {
 		final String inputMessageReceiptHandle = m.getReceiptHandle();
 
 		final String queueName = this.queueName("error");
-		L.d("new queue", queueName + " (" + queueName.length() + ")");
+// L.d("new queue", queueName + " (" + queueName.length() + ")");
 		final SQSCreateQueueParams createQueueRequestParams = sqs.newCreateQueueParams();
 		createQueueRequestParams.setName(queueName);
 
@@ -131,11 +131,12 @@ public class NotificationsSeparator {
 		final String inputMessageReceiptHandle = inputMessage.getReceiptHandle();
 
 		final SrlzNotification srlzd_notification = readNotification(inputMessageBody);
+// L.d("srlzd_notification", Json.serializeToString(srlzd_notification));
 		final SQS sqs = AWS.getSQS();
 		this.messagessProcessed++;
 
 		final String queueName = this.queueName(srlzd_notification.user_id);
-		L.d("new queue", queueName + " (" + queueName.length() + ")");
+// L.d("new queue", queueName + " (" + queueName.length() + ")");
 		final SQSCreateQueueParams createQueueRequestParams = sqs.newCreateQueueParams();
 		createQueueRequestParams.setName(queueName);
 
