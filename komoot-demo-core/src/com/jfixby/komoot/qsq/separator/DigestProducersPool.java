@@ -1,13 +1,16 @@
 
 package com.jfixby.komoot.qsq.separator;
 
+import com.jfixby.scarabei.api.collections.Collection;
 import com.jfixby.scarabei.api.collections.Collections;
 import com.jfixby.scarabei.api.collections.Map;
 import com.jfixby.scarabei.api.debug.Debug;
+import com.jfixby.scarabei.api.log.L;
+import com.jfixby.scarabei.api.sys.Sys;
 import com.jfixby.scarabei.aws.api.sqs.SQSClient;
 
 public class DigestProducersPool {
-	final Map<UserID, DigestProducer> pool = Collections.newMap();
+	final Map<String, DigestProducer> pool = Collections.newMap();
 	private final SQSClient client;
 	private final String digestBotEmailAdress;
 
@@ -17,15 +20,13 @@ public class DigestProducersPool {
 		Debug.checkEmpty("digestBotEmailAdress", digestBotEmailAdress);
 	}
 
-	public void ensureProcessing (final String user_id, final String queuURL) {
-		final UserID uid = new UserID(user_id);
-		DigestProducer producer = this.pool.get(uid);
+	public void ensureProcessing (final String queuURL) {
+		DigestProducer producer = this.pool.get(queuURL);
 		if (producer != null) {
 			return;
 		}
-
-		producer = new DigestProducer(uid, queuURL, this);
-		this.pool.put(uid, producer);
+		producer = new DigestProducer(queuURL, this);
+		this.pool.put(queuURL, producer);
 		producer.start();
 	}
 
@@ -35,6 +36,19 @@ public class DigestProducersPool {
 
 	public String getDigestBotEmailAdress () {
 		return this.digestBotEmailAdress;
+	}
+
+	public void deployPool () {
+		L.d("Deploy digest pool");
+		final Collection<String> allQueues = this.client.listAllSQSUrls()
+			.filter(val -> val.contains(NotificationsSeparator.MAILBOX_PREFIX));
+		allQueues.print("allQueues");
+
+		for (final String q : allQueues) {
+			this.ensureProcessing(q);
+		}
+		Sys.sleep(5000);
+// Sys.exit();
 	}
 
 }

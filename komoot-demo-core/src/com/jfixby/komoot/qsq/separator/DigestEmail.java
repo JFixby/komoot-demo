@@ -35,19 +35,36 @@ public class DigestEmail {
 		this.body.append("Hi, " + this.list.getLast().getUserName() + " your friends are active!");
 		this.body.append("\n");
 		for (final Notification n : this.list) {
-			this.body.append(this.date(n) + "        " + n.getEventString());
+			this.body.append(formatDate(n.getTimeStamp()) + " " + n.getEventString());
 			this.body.append("\n");
 		}
 	}
 
-	private String date (final Notification n) {
-		final long timestamp = n.getTimeStamp();
-		return formatDate(timestamp);
+	public static String formatDate (final long t) {
+		return padRight(padRight(day(t) + ",", 8) + " " + time(t), 20);
 	}
 
-	public static String formatDate (final long timestamp) {
+	public static String fixedLengthString (final String string, final int length) {
+		return padRight(string, length);
+	}
+
+	public static String padRight (final String s, final int n) {
+		return String.format("%1$-" + n + "s", s);
+	}
+
+	public static String padLeft (final String s, final int n) {
+		return String.format("%1$" + n + "s", s);
+	}
+
+	public static String day (final long timestamp) {
 		final Date date = new Date(timestamp);
-		final SimpleDateFormat format = new SimpleDateFormat("EEEE, HH:mm");
+		final SimpleDateFormat format = new SimpleDateFormat("EEEE");
+		return format.format(date);
+	}
+
+	public static String time (final long timestamp) {
+		final Date date = new Date(timestamp);
+		final SimpleDateFormat format = new SimpleDateFormat("HH:mm");
 		return format.format(date);
 	}
 

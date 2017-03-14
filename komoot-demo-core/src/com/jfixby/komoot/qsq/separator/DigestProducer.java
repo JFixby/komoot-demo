@@ -26,18 +26,16 @@ public class DigestProducer {
 
 	@Override
 	public String toString () {
-		return "DigestProducer [uid=" + this.uid + "]";
+		return "DigestProducer[" + this.inputQueueURL + "]";
 	}
 
 	private final StateSwitcher<DIGEST_PRODUCER_STATE> state;
-	private final UserID uid;
 	private final String inputQueueURL;
 	private final DigestProducersPool owner;
 	private final Queue<Notification> localMessagesQueue;
 
-	public DigestProducer (final UserID uid, final String queuURL, final DigestProducersPool owner) {
+	public DigestProducer (final String queuURL, final DigestProducersPool owner) {
 		this.state = JUtils.newStateSwitcher(DIGEST_PRODUCER_STATE.NEW);
-		this.uid = Debug.checkNull(uid);
 		this.owner = owner;
 		this.inputQueueURL = Debug.checkNull(queuURL);
 		this.localMessagesQueue = Collections.newQueue();
@@ -59,7 +57,7 @@ public class DigestProducer {
 		this.workerThread.start();
 	}
 
-	long max_messages_per_digest = 10;
+	long max_messages_per_digest = 500;
 
 	private void work () {
 		L.d("Digest producer is listening", this.inputQueueURL);
@@ -135,7 +133,7 @@ public class DigestProducer {
 		final SQS sqs = AWS.getSQS();
 
 		this.localMessagesQueue.enqueue(notification);
-		L.d(this + " received", notification);
+		L.d("received", notification);
 
 		this.messagessProcessed++;
 

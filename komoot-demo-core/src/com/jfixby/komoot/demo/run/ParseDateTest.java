@@ -26,6 +26,8 @@ public class ParseDateTest {
 		L.d("         ", new Date(timestamp));
 		L.d("         ", DigestEmail.formatDate(timestamp));
 
+		L.d("         ", "<" + DigestEmail.formatDate(timestamp) + ">");
+
 	}
 
 }

@@ -71,8 +71,13 @@ public class NotificationsSeparator {
 
 	};
 	long messagessProcessed = 0;
+	boolean delopyPool = !false;
 
 	private void separate () {
+		if (this.delopyPool) {
+			this.digestProducers.deployPool();
+		}
+
 		L.d("Notifications separator is listening", this.inputQueueURL);
 		while (true) {
 			final SQS sqs = AWS.getSQS();
@@ -103,7 +108,7 @@ public class NotificationsSeparator {
 		final String inputMessageBody = m.getBody();
 		final String inputMessageReceiptHandle = m.getReceiptHandle();
 
-		final String queueName = this.queueName("error");
+		final String queueName = "komoot-usr-error";
 // L.d("new queue", queueName + " (" + queueName.length() + ")");
 		final SQSCreateQueueParams createQueueRequestParams = sqs.newCreateQueueParams();
 		createQueueRequestParams.setName(queueName);
@@ -156,16 +161,18 @@ public class NotificationsSeparator {
 		delete.setMessageReceiptHandle(inputMessageReceiptHandle);
 		final SQSDeleteMessageResult deleteResult = this.client.deleteMessage(delete);
 
-		this.digestProducers.ensureProcessing(srlzd_notification.user_id, queuURL);
+		this.digestProducers.ensureProcessing(queuURL);
 
 	}
+
+	public static final String MAILBOX_PREFIX = "komoot-usr-mailbox";
 
 	private String queueName (final String user_id) {
 		Debug.checkNull("user_id", user_id);
 		if (user_id == null) {
 			return null;
 		}
-		final String result = "komoot-usr-mailbox-"
+		final String result = MAILBOX_PREFIX + "-"
 			+ user_id.replaceAll(":", "").replaceAll("@", "-").replaceAll("\\+", "-").replaceAll("\\.", "-");
 		return result;
 	}
