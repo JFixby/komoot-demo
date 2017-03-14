@@ -24,8 +24,8 @@ import com.jfixby.scarabei.aws.api.sqs.SQSClienSpecs;
 import com.jfixby.scarabei.aws.api.sqs.SQSClient;
 import com.jfixby.scarabei.aws.api.sqs.SQSMessage;
 import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageRequest;
-import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageRequestParams;
-import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageRequestResult;
+import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageParams;
+import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageResult;
 import com.jfixby.scarabei.gson.GoogleGson;
 
 public class RunSubscribeSQS {
@@ -48,11 +48,11 @@ public class RunSubscribeSQS {
 		final SQSClient client = sqs.newClient(specs);
 		long i = 0;
 		while (true) {
-			final SQSReceiveMessageRequestParams params = sqs.newReceiveMessageRequestParams();
+			final SQSReceiveMessageParams params = sqs.newReceiveMessageParams();
 			params.setQueueURL("https://sqs.eu-central-1.amazonaws.com/642548582501/komoot");
 			final SQSReceiveMessageRequest request = sqs.newReceiveMessageRequest(params);
 
-			final SQSReceiveMessageRequestResult result = client.receive(request);
+			final SQSReceiveMessageResult result = client.receive(request);
 
 			final Collection<SQSMessage> messages = result.listMessages();
 			for (final SQSMessage m : messages) {

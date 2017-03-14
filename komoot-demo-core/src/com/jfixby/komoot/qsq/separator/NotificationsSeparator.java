@@ -19,8 +19,8 @@ import com.jfixby.scarabei.aws.api.sqs.SQSClienSpecs;
 import com.jfixby.scarabei.aws.api.sqs.SQSClient;
 import com.jfixby.scarabei.aws.api.sqs.SQSMessage;
 import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageRequest;
-import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageRequestParams;
-import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageRequestResult;
+import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageParams;
+import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageResult;
 
 public class NotificationsSeparator {
 
@@ -65,11 +65,11 @@ public class NotificationsSeparator {
 
 		final SQS sqs = AWS.getSQS();
 		while (true) {
-			final SQSReceiveMessageRequestParams params = sqs.newReceiveMessageRequestParams();
+			final SQSReceiveMessageParams params = sqs.newReceiveMessageParams();
 			params.setQueueURL(this.queueURL);
 			final SQSReceiveMessageRequest request = sqs.newReceiveMessageRequest(params);
 
-			final SQSReceiveMessageRequestResult result = this.client.receive(request);
+			final SQSReceiveMessageResult result = this.client.receive(request);
 
 			final Collection<SQSMessage> messages = result.listMessages();
 			for (final SQSMessage m : messages) {
