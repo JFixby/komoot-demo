@@ -6,6 +6,7 @@ import com.jfixby.scarabei.aws.api.AWSCredentialsProvider;
 public class NotificationsSeparatorSpecs {
 	private String inputQueue;
 	private AWSCredentialsProvider awsKeys;
+	private String digestBotEmailAdress;
 
 	NotificationsSeparatorSpecs () {
 	}
@@ -24,6 +25,14 @@ public class NotificationsSeparatorSpecs {
 
 	public String getInputQueueURL () {
 		return this.inputQueue;
+	}
+
+	public String getDigestBotEmailAdress () {
+		return this.digestBotEmailAdress;
+	}
+
+	public void setDigestBotEmailAdress (final String digestBotEmailAdress) {
+		this.digestBotEmailAdress = digestBotEmailAdress;
 	}
 
 }

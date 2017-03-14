@@ -1,14 +1,14 @@
 
-package com.jfixby.komoot.demo;
+package com.jfixby.komoot.demo.run;
 
 import java.io.IOException;
 
+import com.jfixby.komoot.demo.Notification;
 import com.jfixby.komoot.demo.credentials.AWSCredentials;
+import com.jfixby.komoot.io.SrlzMessageBody;
+import com.jfixby.komoot.io.SrlzNotification;
 import com.jfixby.komoot.qsq.separator.NotificationsSeparator;
 import com.jfixby.komoot.sns.FailedToReadNotificationJsonException;
-import com.jfixby.komoot.sns.Notification;
-import com.jfixby.komoot.sns.io.SrlzMessageBody;
-import com.jfixby.komoot.sns.io.SrlzNotification;
 import com.jfixby.scarabei.amazon.aws.RedAWS;
 import com.jfixby.scarabei.api.collections.Collection;
 import com.jfixby.scarabei.api.desktop.ScarabeiDesktop;

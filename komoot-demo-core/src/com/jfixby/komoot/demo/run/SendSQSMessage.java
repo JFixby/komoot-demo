@@ -1,4 +1,4 @@
-package com.jfixby.komoot.demo;
+package com.jfixby.komoot.demo.run;
 
 public class SendSQSMessage {
 

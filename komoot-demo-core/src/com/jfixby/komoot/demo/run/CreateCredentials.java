@@ -1,5 +1,5 @@
 
-package com.jfixby.komoot.demo;
+package com.jfixby.komoot.demo.run;
 
 import java.io.IOException;
 

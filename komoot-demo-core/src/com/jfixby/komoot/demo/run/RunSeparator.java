@@ -1,5 +1,5 @@
 
-package com.jfixby.komoot.demo;
+package com.jfixby.komoot.demo.run;
 
 import java.io.IOException;
 
@@ -37,6 +37,7 @@ public class RunSeparator {
 
 		final NotificationsSeparatorSpecs specs = NotificationsSeparator.newNotificationsSeparatorSpecs();
 		specs.setInputQueueURL(separatorConfig.inputQueueURL);
+		specs.setDigestBotEmailAdress(separatorConfig.digestBotEmailAdress);
 
 		specs.setAWSCredentialsProvider(awsKeys);
 		final NotificationsSeparator separator = NotificationsSeparator.newNotificationsSeparator(specs);

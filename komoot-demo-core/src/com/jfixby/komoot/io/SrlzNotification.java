@@ -1,5 +1,5 @@
 
-package com.jfixby.komoot.sns.io;
+package com.jfixby.komoot.io;
 
 public class SrlzNotification {
 

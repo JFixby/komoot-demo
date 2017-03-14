@@ -1,15 +1,17 @@
 
 package com.jfixby.komoot.qsq.separator;
 
+import com.jfixby.komoot.demo.Notification;
+import com.jfixby.komoot.io.SrlzMessageBody;
+import com.jfixby.komoot.io.SrlzNotification;
 import com.jfixby.komoot.sns.FailedToReadNotificationJsonException;
-import com.jfixby.komoot.sns.Notification;
-import com.jfixby.komoot.sns.io.SrlzMessageBody;
-import com.jfixby.komoot.sns.io.SrlzNotification;
 import com.jfixby.scarabei.api.collections.Collection;
 import com.jfixby.scarabei.api.debug.Debug;
+import com.jfixby.scarabei.api.err.Err;
 import com.jfixby.scarabei.api.json.Json;
 import com.jfixby.scarabei.api.log.L;
 import com.jfixby.scarabei.api.md5.MD5;
+import com.jfixby.scarabei.api.sys.Sys;
 import com.jfixby.scarabei.api.util.JUtils;
 import com.jfixby.scarabei.api.util.StateSwitcher;
 import com.jfixby.scarabei.aws.api.AWS;
@@ -30,12 +32,15 @@ import com.jfixby.scarabei.aws.api.sqs.SQSSendMessageParams;
 public class NotificationsSeparator {
 
 	private NotificationsSeparator () {
+		Err.reportError("Invalid constructor");
+		this.digestProducers = null;
 	}
 
 	AWSCredentialsProvider awsKeys;
 	private StateSwitcher<SEPARATOR_STATE> state;
 	private SQSClient client;
 	private String inputQueueURL;
+	private final DigestProducersPool digestProducers;
 
 	private NotificationsSeparator (final NotificationsSeparatorSpecs specs) {
 		this.awsKeys = specs.getAWSCredentialsProvider();
@@ -45,8 +50,10 @@ public class NotificationsSeparator {
 		this.awsKeys = Debug.checkNull("AWSCredentialsProvider", specs.getAWSCredentialsProvider());
 		sqsspecs.setAWSCredentialsProvider(this.awsKeys);
 		this.inputQueueURL = Debug.checkNull("queueURL", specs.getInputQueueURL());
+		Debug.checkEmpty("queueURL", this.inputQueueURL);
 
 		this.client = sqs.newClient(sqsspecs);
+		this.digestProducers = new DigestProducersPool(this.client, specs.getDigestBotEmailAdress());
 	}
 
 	public static NotificationsSeparatorSpecs newNotificationsSeparatorSpecs () {
@@ -67,7 +74,7 @@ public class NotificationsSeparator {
 	long messagessProcessed = 0;
 
 	private void separate () {
-
+		L.d("Notifications separator is listening", this.inputQueueURL);
 		while (true) {
 			final SQS sqs = AWS.getSQS();
 			final SQSReceiveMessageParams params = sqs.newReceiveMessageParams();
@@ -83,31 +90,22 @@ public class NotificationsSeparator {
 					this.processBody(m);
 				} catch (final FailedToReadNotificationJsonException e) {
 					L.e(e);
+					this.reportBadMessage(m);
 				}
 
 			}
+			Sys.sleep(150);
 		}
 
 	}
 
-	private void processBody (final SQSMessage inputMessage) throws FailedToReadNotificationJsonException {
-		final String inputMessageBody = inputMessage.getBody();
-		final String inputMessageReceiptHandle = inputMessage.getReceiptHandle();
-
-		final SrlzNotification srlzd_notification = readNotification(inputMessageBody);
+	private void reportBadMessage (final SQSMessage m) {
 		final SQS sqs = AWS.getSQS();
-		final Notification notification = new Notification();
-		notification.put("user_id", srlzd_notification.user_id);
-		notification.put("timestamp", srlzd_notification.timestamp);
-		notification.put("name", srlzd_notification.name);
-		notification.put("email", srlzd_notification.email);
-		notification.put("message", srlzd_notification.message);
-// L.d("notification", Json.serializeToString(srlzd_notification));
-		notification.print("messagess processed: " + this.messagessProcessed);
-		this.messagessProcessed++;
+		final String inputMessageBody = m.getBody();
+		final String inputMessageReceiptHandle = m.getReceiptHandle();
 
-		final String queueName = this.queueName(srlzd_notification.user_id);
-		L.d("new queue", queueName + " " + queueName.length());
+		final String queueName = this.queueName("error");
+		L.d("new queue", queueName + " (" + queueName.length() + ")");
 		final SQSCreateQueueParams createQueueRequestParams = sqs.newCreateQueueParams();
 		createQueueRequestParams.setName(queueName);
 
@@ -126,6 +124,48 @@ public class NotificationsSeparator {
 		delete.setQueueURL(this.inputQueueURL);
 		delete.setMessageReceiptHandle(inputMessageReceiptHandle);
 		final SQSDeleteMessageResult deleteResult = this.client.deleteMessage(delete);
+
+	}
+
+	private void processBody (final SQSMessage inputMessage) throws FailedToReadNotificationJsonException {
+		final String inputMessageBody = inputMessage.getBody();
+		final String inputMessageReceiptHandle = inputMessage.getReceiptHandle();
+
+		final SrlzNotification srlzd_notification = readNotification(inputMessageBody);
+		final SQS sqs = AWS.getSQS();
+		final Notification notification = new Notification();
+		notification.put("user_id", srlzd_notification.user_id);
+		notification.put("timestamp", srlzd_notification.timestamp);
+		notification.put("name", srlzd_notification.name);
+
+		notification.setToEmailAdress(srlzd_notification.email);
+		notification.put("message", srlzd_notification.message);
+// L.d("notification", Json.serializeToString(srlzd_notification));
+		notification.print("messagess processed: " + this.messagessProcessed);
+		this.messagessProcessed++;
+
+		final String queueName = this.queueName(srlzd_notification.user_id);
+		L.d("new queue", queueName + " (" + queueName.length() + ")");
+		final SQSCreateQueueParams createQueueRequestParams = sqs.newCreateQueueParams();
+		createQueueRequestParams.setName(queueName);
+
+		final SQSCreateQueueResult queueCreateResult = this.client.createQueue(createQueueRequestParams);
+		final String queuURL = queueCreateResult.getQueueURL();
+		L.d("creating queue", queuURL);
+
+		final SQSSendMessageParams sendParams = sqs.newSendMessageParams();
+		sendParams.setQueueURL(queuURL);
+		final String messageText = inputMessageBody;
+		sendParams.setBody(messageText);
+
+		this.client.sendMessage(sendParams);
+
+		final SQSDeleteMessageParams delete = sqs.newDeleteMessageParams();
+		delete.setQueueURL(this.inputQueueURL);
+		delete.setMessageReceiptHandle(inputMessageReceiptHandle);
+		final SQSDeleteMessageResult deleteResult = this.client.deleteMessage(delete);
+
+		this.digestProducers.ensureProcessing(srlzd_notification.user_id, queuURL);
 
 	}
 
