@@ -1,7 +1,7 @@
 
 package com.jfixby.komoot.qsq.separator;
 
-import com.jfixby.komoot.demo.Notification;
+import com.jfixby.komoot.io.SrlzNotification;
 import com.jfixby.komoot.sns.FailedToReadNotificationJsonException;
 import com.jfixby.scarabei.api.collections.Collection;
 import com.jfixby.scarabei.api.collections.Collections;
@@ -15,6 +15,8 @@ import com.jfixby.scarabei.api.util.StateSwitcher;
 import com.jfixby.scarabei.aws.api.AWS;
 import com.jfixby.scarabei.aws.api.sqs.SQS;
 import com.jfixby.scarabei.aws.api.sqs.SQSClient;
+import com.jfixby.scarabei.aws.api.sqs.SQSDeleteMessageParams;
+import com.jfixby.scarabei.aws.api.sqs.SQSDeleteMessageResult;
 import com.jfixby.scarabei.aws.api.sqs.SQSMessage;
 import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageParams;
 import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageRequest;
@@ -43,6 +45,8 @@ public class DigestProducer {
 		}
 
 	};
+	private long messagessProcessed = 0;
+	private final boolean deleteInputMessages = false;
 
 	public void start () {
 		this.state.expectState(DIGEST_PRODUCER_STATE.NEW);
@@ -87,7 +91,8 @@ public class DigestProducer {
 		final DigestEmailSpecs specs = new DigestEmailSpecs();
 		{
 			final Notification notification = this.localMessagesQueue.getLast();
-			specs.setTo(notification.getToEmailAdress());
+			specs.setTo(notification.getEmail());
+			specs.setSubject("Komoot updates");
 		}
 
 		specs.setFrom(this.owner.getDigestBotEmailAdress());
@@ -101,9 +106,31 @@ public class DigestProducer {
 
 	}
 
-	private void processBody (final SQSMessage m) throws FailedToReadNotificationJsonException {
-		final Notification nextNotification = null;
-		this.localMessagesQueue.enqueue(nextNotification);
+	private void processBody (final SQSMessage inputMessage) throws FailedToReadNotificationJsonException {
+// final Notification nextNotification = null;
+// this.localMessagesQueue.enqueue(nextNotification);
+
+		final String inputMessageBody = inputMessage.getBody();
+		final String inputMessageReceiptHandle = inputMessage.getReceiptHandle();
+
+		final SrlzNotification srlzd_notification = NotificationsSeparator.readNotification(inputMessageBody);
+		final Notification notification = new Notification();
+		notification.setEmail(srlzd_notification.email);
+		notification.setEventString(srlzd_notification.message);
+		notification.setTimeStamp(srlzd_notification.timestamp);
+		notification.setUserName(srlzd_notification.name);
+
+		final SQS sqs = AWS.getSQS();
+		this.messagessProcessed++;
+
+		if (this.deleteInputMessages) {
+			final SQSDeleteMessageParams delete = sqs.newDeleteMessageParams();
+			delete.setQueueURL(this.inputQueueURL);
+			delete.setMessageReceiptHandle(inputMessageReceiptHandle);
+			final SQSClient client = this.owner.getSQSClient();
+			final SQSDeleteMessageResult deleteResult = client.deleteMessage(delete);
+		}
+
 	}
 
 }

@@ -1,7 +1,6 @@
 
 package com.jfixby.komoot.qsq.separator;
 
-import com.jfixby.komoot.demo.Notification;
 import com.jfixby.komoot.io.SrlzMessageBody;
 import com.jfixby.komoot.io.SrlzNotification;
 import com.jfixby.komoot.sns.FailedToReadNotificationJsonException;
@@ -133,15 +132,6 @@ public class NotificationsSeparator {
 
 		final SrlzNotification srlzd_notification = readNotification(inputMessageBody);
 		final SQS sqs = AWS.getSQS();
-		final Notification notification = new Notification();
-		notification.put("user_id", srlzd_notification.user_id);
-		notification.put("timestamp", srlzd_notification.timestamp);
-		notification.put("name", srlzd_notification.name);
-
-		notification.setToEmailAdress(srlzd_notification.email);
-		notification.put("message", srlzd_notification.message);
-// L.d("notification", Json.serializeToString(srlzd_notification));
-		notification.print("messagess processed: " + this.messagessProcessed);
 		this.messagessProcessed++;
 
 		final String queueName = this.queueName(srlzd_notification.user_id);
@@ -179,7 +169,7 @@ public class NotificationsSeparator {
 		return result;
 	}
 
-	private static SrlzNotification readNotification (final String body) throws FailedToReadNotificationJsonException {
+	public static SrlzNotification readNotification (final String body) throws FailedToReadNotificationJsonException {
 		SrlzMessageBody msgBody;
 		try {
 			msgBody = Json.deserializeFromString(SrlzMessageBody.class, body);

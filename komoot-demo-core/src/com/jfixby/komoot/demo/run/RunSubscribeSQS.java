@@ -3,7 +3,6 @@ package com.jfixby.komoot.demo.run;
 
 import java.io.IOException;
 
-import com.jfixby.komoot.demo.Notification;
 import com.jfixby.komoot.demo.credentials.AWSCredentials;
 import com.jfixby.komoot.io.SrlzMessageBody;
 import com.jfixby.komoot.io.SrlzNotification;
@@ -23,8 +22,8 @@ import com.jfixby.scarabei.aws.api.sqs.SQS;
 import com.jfixby.scarabei.aws.api.sqs.SQSClienSpecs;
 import com.jfixby.scarabei.aws.api.sqs.SQSClient;
 import com.jfixby.scarabei.aws.api.sqs.SQSMessage;
-import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageRequest;
 import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageParams;
+import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageRequest;
 import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageResult;
 import com.jfixby.scarabei.gson.GoogleGson;
 
@@ -58,21 +57,9 @@ public class RunSubscribeSQS {
 			for (final SQSMessage m : messages) {
 // m.print();
 				final String body = m.getBody();
-
 				try {
 					final SrlzNotification srlzd_notification = readNotification(body);
-
-					final Notification notification = new Notification();
-					notification.put("user_id", srlzd_notification.user_id);
-
-					notification.put("timestamp", srlzd_notification.timestamp);
-					notification.put("name", srlzd_notification.name);
-					notification.put("email", srlzd_notification.email);
-					notification.put("message", srlzd_notification.message);
-// L.d("notification", Json.serializeToString(srlzd_notification));
-					notification.print("notification: " + i);
 					i++;
-
 				} catch (final FailedToReadNotificationJsonException e) {
 					L.e(e);
 				}
