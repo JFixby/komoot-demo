@@ -1,22 +1,17 @@
 
-package com.jfixby.komoot.demo;
+package com.jfixby.komoot.qsq.separator;
 
-import java.io.IOException;
-
-import com.jfixby.komoot.demo.credentials.AWSCredentials;
-import com.jfixby.komoot.qsq.separator.NotificationsSeparator;
 import com.jfixby.komoot.sns.FailedToReadNotificationJsonException;
 import com.jfixby.komoot.sns.Notification;
 import com.jfixby.komoot.sns.io.SrlzMessageBody;
 import com.jfixby.komoot.sns.io.SrlzNotification;
-import com.jfixby.scarabei.amazon.aws.RedAWS;
 import com.jfixby.scarabei.api.collections.Collection;
-import com.jfixby.scarabei.api.desktop.ScarabeiDesktop;
-import com.jfixby.scarabei.api.file.File;
-import com.jfixby.scarabei.api.file.LocalFileSystem;
+import com.jfixby.scarabei.api.debug.Debug;
 import com.jfixby.scarabei.api.json.Json;
-import com.jfixby.scarabei.api.json.JsonString;
 import com.jfixby.scarabei.api.log.L;
+import com.jfixby.scarabei.api.md5.MD5;
+import com.jfixby.scarabei.api.util.JUtils;
+import com.jfixby.scarabei.api.util.StateSwitcher;
 import com.jfixby.scarabei.aws.api.AWS;
 import com.jfixby.scarabei.aws.api.AWSCredentialsProvider;
 import com.jfixby.scarabei.aws.api.sqs.SQS;
@@ -26,33 +21,55 @@ import com.jfixby.scarabei.aws.api.sqs.SQSMessage;
 import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageRequest;
 import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageRequestParams;
 import com.jfixby.scarabei.aws.api.sqs.SQSReceiveMessageRequestResult;
-import com.jfixby.scarabei.gson.GoogleGson;
 
-public class RunSubscribeSQS {
+public class NotificationsSeparator {
 
-	public static void main (final String[] args) throws IOException {
-		ScarabeiDesktop.deploy();
-		Json.installComponent(new GoogleGson());
-		AWS.installComponent(new RedAWS());
+	private NotificationsSeparator () {
+	}
+
+	AWSCredentialsProvider awsKeys;
+	private StateSwitcher<SEPARATOR_STATE> state;
+	private SQSClient client;
+	private String queueURL;
+
+	private NotificationsSeparator (final NotificationsSeparatorSpecs specs) {
+		this.awsKeys = specs.getAWSCredentialsProvider();
+		this.state = JUtils.newStateSwitcher(SEPARATOR_STATE.NEW);
+		final SQS sqs = AWS.getSQS();
+		final SQSClienSpecs sqsspecs = sqs.newSQSClienSpecs();
+		this.awsKeys = Debug.checkNull("AWSCredentialsProvider", specs.getAWSCredentialsProvider());
+		sqsspecs.setAWSCredentialsProvider(this.awsKeys);
+		this.queueURL = Debug.checkNull("queueURL", specs.getInputQueueURL());
+
+		this.client = sqs.newClient(sqsspecs);
+	}
+
+	public static NotificationsSeparatorSpecs newNotificationsSeparatorSpecs () {
+		return new NotificationsSeparatorSpecs();
+	}
+
+	public static NotificationsSeparator newNotificationsSeparator (final NotificationsSeparatorSpecs specs) {
+		return new NotificationsSeparator(specs);
+	}
+
+	public Thread mainThread = new Thread() {
+		@Override
+		public void run () {
+			NotificationsSeparator.this.separate();
+		}
+
+	};
+	long messagessProcessed = 0;
+
+	private void separate () {
 
 		final SQS sqs = AWS.getSQS();
-
-		final File awsCredentialsFile = LocalFileSystem.ApplicationHome().parent().child("komoot-demo-config").child("credentials")
-			.child("aws-credentials.json");
-		final JsonString credentialsJson = Json.newJsonString(awsCredentialsFile.readToString());
-		final AWSCredentialsProvider awsKeys = Json.deserializeFromString(AWSCredentials.class, credentialsJson);
-
-		final SQSClienSpecs specs = sqs.newSQSClienSpecs();
-		specs.setAWSCredentialsProvider(awsKeys);
-
-		final SQSClient client = sqs.newClient(specs);
-		long i = 0;
 		while (true) {
 			final SQSReceiveMessageRequestParams params = sqs.newReceiveMessageRequestParams();
-			params.setQueueURL("https://sqs.eu-central-1.amazonaws.com/642548582501/komoot");
+			params.setQueueURL(this.queueURL);
 			final SQSReceiveMessageRequest request = sqs.newReceiveMessageRequest(params);
 
-			final SQSReceiveMessageRequestResult result = client.receive(request);
+			final SQSReceiveMessageRequestResult result = this.client.receive(request);
 
 			final Collection<SQSMessage> messages = result.listMessages();
 			for (final SQSMessage m : messages) {
@@ -70,8 +87,8 @@ public class RunSubscribeSQS {
 					notification.put("email", srlzd_notification.email);
 					notification.put("message", srlzd_notification.message);
 // L.d("notification", Json.serializeToString(srlzd_notification));
-					notification.print("notification: " + i);
-					i++;
+					notification.print("messagess processed: " + this.messagessProcessed);
+					this.messagessProcessed++;
 
 				} catch (final FailedToReadNotificationJsonException e) {
 					L.e(e);
@@ -79,6 +96,7 @@ public class RunSubscribeSQS {
 
 			}
 		}
+
 	}
 
 	private static SrlzNotification readNotification (final String body) throws FailedToReadNotificationJsonException {
@@ -92,7 +110,7 @@ public class RunSubscribeSQS {
 		try {
 			final SrlzNotification notification = Json.deserializeFromString(SrlzNotification.class, msgBody.Message);
 			if (notification.user_id == null || "".equals(notification.user_id)) {
-				notification.user_id = NotificationsSeparator.generateFakeUserID(notification.email);
+				notification.user_id = generateFakeUserID(notification.email);
 			}
 			return notification;
 		} catch (final Throwable e) {
@@ -101,4 +119,13 @@ public class RunSubscribeSQS {
 
 	}
 
+	public static String generateFakeUserID (final String email) {
+		return MD5.md5String(email).getHumanReadableMD5HashHexString().toUpperCase() + "-" + email;
+	}
+
+	public void start () {
+		this.state.expectState(SEPARATOR_STATE.NEW);
+		this.state.switchState(SEPARATOR_STATE.RUNNING);
+		this.mainThread.start();
+	}
 }
