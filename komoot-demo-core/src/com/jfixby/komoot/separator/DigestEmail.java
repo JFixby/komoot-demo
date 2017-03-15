@@ -40,6 +40,7 @@ public class DigestEmail {
 		this.body.setLength(0);
 		this.body.append("Hi, " + this.list.getLast().getUserName() + " your friends are active!");
 		this.body.append("\n");
+		this.body.append("\n");
 		for (final Notification n : this.list) {
 			this.body.append(formatDate(n.getTimeStamp()) + " " + n.getEventString());
 			this.body.append("\n");
@@ -49,7 +50,7 @@ public class DigestEmail {
 		L.d("      from", this.from);
 		L.d("        to", this.to);
 		L.d("   subject", this.subject);
-		L.d("          ", this.body);
+		L.d(this.body);
 		L.d();
 	}
 

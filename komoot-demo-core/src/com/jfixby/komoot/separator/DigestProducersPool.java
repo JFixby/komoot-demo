@@ -23,6 +23,7 @@ public class DigestProducersPool {
 	final String debugEmailDomain;
 	public long sleep_before_start;
 	public long max_messages_per_digest;
+	final long digestSendPeriod;
 
 	public DigestProducersPool (final SQSClient client, final String digestBotEmailAdress, final AWSCredentialsProvider awsKeys,
 		final DigestProcessorSpecs specs) {
@@ -40,6 +41,7 @@ public class DigestProducersPool {
 		this.debugEmailDomain = specs.getDebugEmailDomain();
 		this.sleep_before_start = specs.getDigestSleepBeforeStartTime();
 		this.max_messages_per_digest = IntegerMath.limit(10, specs.getMaxEventsPerDigest(), Integer.MAX_VALUE);
+		this.digestSendPeriod = specs.getDigestSendPeriod();
 
 	}
 

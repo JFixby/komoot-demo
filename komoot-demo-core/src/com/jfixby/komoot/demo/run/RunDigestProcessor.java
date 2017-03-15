@@ -48,6 +48,7 @@ public class RunDigestProcessor {
 		specs.setDebugMode(true);
 		specs.setDebugEmailDomain("jfixby.com");
 		specs.setDebugEmailSender("komoot");
+		specs.setDigestSendPeriod(digestConfig.digestSendPeriod);
 		specs.setMaxEventsPerDigest(digestConfig.maxEventsPerDigest);
 		specs.setSESRegionName(mailConfig.sesRegion);
 		specs.setSQSMailboxPrefix(digestConfig.sqsMailboxPrefix);

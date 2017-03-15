@@ -1,6 +1,7 @@
 
 package com.jfixby.komoot.digest;
 
+import com.jfixby.scarabei.api.time.TimeStream;
 import com.jfixby.scarabei.aws.api.AWSCredentialsProvider;
 
 public class DigestProcessorSpecs {
@@ -15,6 +16,7 @@ public class DigestProcessorSpecs {
 	private long maxMessagesPerDigest = 500;
 	private long digestSleepBeforeStartTime;
 	private String sQSMailboxPrefix;
+	private long digestSendPeriod = TimeStream.HOUR;
 
 	public long getMaxEventsPerDigest () {
 		return this.maxMessagesPerDigest;
@@ -86,6 +88,14 @@ public class DigestProcessorSpecs {
 
 	public boolean getDebugMode () {
 		return this.debugMode;
+	}
+
+	public long getDigestSendPeriod () {
+		return this.digestSendPeriod;
+	}
+
+	public void setDigestSendPeriod (final long digestSendPeriod) {
+		this.digestSendPeriod = digestSendPeriod;
 	}
 
 }

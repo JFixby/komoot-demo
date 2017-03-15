@@ -6,4 +6,5 @@ public class DigestProcessorConfig {
 	public long digestSleepBeforeStartTime = -1;
 	public long maxEventsPerDigest;
 	public String sqsMailboxPrefix = "";
+	public long digestSendPeriod;
 }

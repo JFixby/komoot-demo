@@ -9,7 +9,6 @@ import com.jfixby.scarabei.api.collections.Queue;
 import com.jfixby.scarabei.api.debug.Debug;
 import com.jfixby.scarabei.api.log.L;
 import com.jfixby.scarabei.api.sys.Sys;
-import com.jfixby.scarabei.api.time.TimeStream;
 import com.jfixby.scarabei.api.util.JUtils;
 import com.jfixby.scarabei.api.util.StateSwitcher;
 import com.jfixby.scarabei.aws.api.AWS;
@@ -39,6 +38,7 @@ public class DigestProducer {
 		this.owner = owner;
 		this.inputQueueURL = Debug.checkNull(queuURL);
 		this.localMessagesQueue = Collections.newQueue();
+		this.digestSendPeriod = owner.digestSendPeriod;
 
 	}
 
@@ -51,6 +51,7 @@ public class DigestProducer {
 	};
 	private long messagessProcessed = 0;
 	private final boolean deleteInputMessages = false;
+	private final long digestSendPeriod;
 
 	public void start () {
 		this.state.expectState(DIGEST_PRODUCER_STATE.NEW);
@@ -78,7 +79,7 @@ public class DigestProducer {
 				// notifications
 				this.processDigest();
 				L.d("Digest[" + this + "] is going to sleep.");
-				Sys.sleep(TimeStream.HOUR);
+				Sys.sleep(this.digestSendPeriod);
 				return;
 			}
 			for (final SQSMessage m : messages) {
@@ -100,15 +101,17 @@ public class DigestProducer {
 		}
 
 		final DigestEmailSpecs specs = new DigestEmailSpecs();
-
+		String user;
 		if (!this.owner.debug) {
 			final Notification notification = this.localMessagesQueue.getLast();
 			specs.setTo(notification.getEmail());
+			user = notification.getUserName();
 		} else {// debug mode
 			final Notification notification = this.localMessagesQueue.getLast();
+			user = notification.getUserName();
 			specs.setTo(this.owner.debugWrapEmail(notification.getEmail()));
 		}
-		specs.setSubject("Komoot updates");
+		specs.setSubject("Komoot updates for " + user);
 		specs.setFrom(this.owner.getDigestBotEmailAdress());
 
 		final DigestEmail emailToUser = new DigestEmail(specs);
@@ -117,7 +120,8 @@ public class DigestProducer {
 			emailToUser.addNotification(notification);
 		}
 		emailToUser.seal();
-		if (!this.owner.debug) {
+// if (!this.owner.debug)
+		{
 			emailToUser.send(this.owner.getMailClient());
 		}
 
@@ -140,7 +144,7 @@ public class DigestProducer {
 		final SQS sqs = AWS.getSQS();
 
 		this.localMessagesQueue.enqueue(notification);
-		L.d("received notification", notification);
+		L.d("      received notification", notification);
 
 		this.messagessProcessed++;
 
