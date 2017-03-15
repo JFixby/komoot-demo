@@ -1,0 +1,5 @@
+{
+  "inputQueueURL": "http://inout.queue",
+  "sqsMailboxPrefix": "kns-usr-nbox",
+  "separatorStartProcessingDelay": 1000
+}
