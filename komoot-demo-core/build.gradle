@@ -11,7 +11,7 @@ repositories {
 }
 
 ext {
-        scarabeiVersion = "-SNAPSHOT"
+        scarabeiVersion = "1.3.2"
 }
 
 dependencies {
