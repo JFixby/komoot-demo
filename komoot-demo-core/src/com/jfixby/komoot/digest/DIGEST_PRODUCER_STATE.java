@@ -1,5 +1,5 @@
 
-package com.jfixby.komoot.separator;
+package com.jfixby.komoot.digest;
 
 public enum DIGEST_PRODUCER_STATE {
 	NEW, WORKING

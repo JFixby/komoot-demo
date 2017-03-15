@@ -1,5 +1,5 @@
 
-package com.jfixby.komoot.separator;
+package com.jfixby.komoot;
 
 public enum PROCESSOR_STATE {
 	NEW, RUNNING

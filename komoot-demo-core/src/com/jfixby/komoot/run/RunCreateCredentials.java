@@ -1,9 +1,9 @@
 
-package com.jfixby.komoot.demo.run;
+package com.jfixby.komoot.run;
 
 import java.io.IOException;
 
-import com.jfixby.komoot.demo.credentials.AWSCredentials;
+import com.jfixby.komoot.credentials.AWSCredentials;
 import com.jfixby.scarabei.api.desktop.ScarabeiDesktop;
 import com.jfixby.scarabei.api.file.File;
 import com.jfixby.scarabei.api.file.LocalFileSystem;
@@ -12,7 +12,7 @@ import com.jfixby.scarabei.api.log.L;
 import com.jfixby.scarabei.api.sys.Sys;
 import com.jfixby.scarabei.gson.GoogleGson;
 
-public class CreateCredentials {
+public class RunCreateCredentials {
 
 	public static void main (final String[] args) throws IOException {
 		ScarabeiDesktop.deploy();

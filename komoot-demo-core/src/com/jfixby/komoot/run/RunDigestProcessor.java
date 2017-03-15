@@ -1,13 +1,13 @@
 
-package com.jfixby.komoot.demo.run;
+package com.jfixby.komoot.run;
 
 import java.io.IOException;
 
-import com.jfixby.komoot.demo.credentials.AWSCredentials;
+import com.jfixby.komoot.credentials.AWSCredentials;
 import com.jfixby.komoot.digest.DigestProcessor;
 import com.jfixby.komoot.digest.DigestProcessorSpecs;
 import com.jfixby.komoot.digest.io.DigestProcessorConfig;
-import com.jfixby.komoot.ses.io.MailServerConfig;
+import com.jfixby.komoot.mail.io.MailServerConfig;
 import com.jfixby.scarabei.amazon.aws.RedAWS;
 import com.jfixby.scarabei.api.desktop.ScarabeiDesktop;
 import com.jfixby.scarabei.api.file.File;

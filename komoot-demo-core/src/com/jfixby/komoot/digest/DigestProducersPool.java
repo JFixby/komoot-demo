@@ -1,7 +1,6 @@
 
-package com.jfixby.komoot.separator;
+package com.jfixby.komoot.digest;
 
-import com.jfixby.komoot.digest.DigestProcessorSpecs;
 import com.jfixby.scarabei.api.collections.Collections;
 import com.jfixby.scarabei.api.collections.Map;
 import com.jfixby.scarabei.api.debug.Debug;

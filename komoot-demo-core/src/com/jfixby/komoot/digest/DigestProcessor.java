@@ -1,8 +1,7 @@
 
 package com.jfixby.komoot.digest;
 
-import com.jfixby.komoot.separator.DigestProducersPool;
-import com.jfixby.komoot.separator.PROCESSOR_STATE;
+import com.jfixby.komoot.PROCESSOR_STATE;
 import com.jfixby.komoot.separator.QueueRegistry;
 import com.jfixby.scarabei.api.collections.Collection;
 import com.jfixby.scarabei.api.collections.List;

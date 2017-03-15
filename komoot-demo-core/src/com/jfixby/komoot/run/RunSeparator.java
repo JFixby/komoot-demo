@@ -1,9 +1,9 @@
 
-package com.jfixby.komoot.demo.run;
+package com.jfixby.komoot.run;
 
 import java.io.IOException;
 
-import com.jfixby.komoot.demo.credentials.AWSCredentials;
+import com.jfixby.komoot.credentials.AWSCredentials;
 import com.jfixby.komoot.separator.NotificationsSeparator;
 import com.jfixby.komoot.separator.NotificationsSeparatorSpecs;
 import com.jfixby.komoot.separator.io.SeperatorConfig;

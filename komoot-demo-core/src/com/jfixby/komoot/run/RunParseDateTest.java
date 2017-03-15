@@ -1,9 +1,9 @@
 
-package com.jfixby.komoot.demo.run;
+package com.jfixby.komoot.run;
 
 import java.util.Date;
 
-import com.jfixby.komoot.separator.DigestEmail;
+import com.jfixby.komoot.digest.DigestEmail;
 import com.jfixby.komoot.separator.Notification;
 import com.jfixby.scarabei.amazon.aws.RedAWS;
 import com.jfixby.scarabei.api.desktop.ScarabeiDesktop;
@@ -12,7 +12,7 @@ import com.jfixby.scarabei.api.log.L;
 import com.jfixby.scarabei.aws.api.AWS;
 import com.jfixby.scarabei.gson.GoogleGson;
 
-public class ParseDateTest {
+public class RunParseDateTest {
 
 	public static void main (final String[] args) {
 		ScarabeiDesktop.deploy();

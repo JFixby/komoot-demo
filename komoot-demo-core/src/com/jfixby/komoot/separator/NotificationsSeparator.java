@@ -1,6 +1,7 @@
 
 package com.jfixby.komoot.separator;
 
+import com.jfixby.komoot.PROCESSOR_STATE;
 import com.jfixby.komoot.io.SrlzMessageBody;
 import com.jfixby.komoot.io.SrlzNotification;
 import com.jfixby.komoot.sns.FailedToReadNotificationJsonException;

@@ -1,5 +1,5 @@
 
-package com.jfixby.komoot.demo.credentials;
+package com.jfixby.komoot.credentials;
 
 import com.jfixby.scarabei.aws.api.AWSCredentialsProvider;
 

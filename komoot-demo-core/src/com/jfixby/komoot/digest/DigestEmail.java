@@ -1,9 +1,10 @@
 
-package com.jfixby.komoot.separator;
+package com.jfixby.komoot.digest;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import com.jfixby.komoot.separator.Notification;
 import com.jfixby.scarabei.api.collections.Collections;
 import com.jfixby.scarabei.api.collections.List;
 import com.jfixby.scarabei.api.debug.Debug;

@@ -1,5 +1,5 @@
 
-package com.jfixby.komoot.ses.io;
+package com.jfixby.komoot.mail.io;
 
 public class MailServerConfig {
 	public String sesRegion = "";

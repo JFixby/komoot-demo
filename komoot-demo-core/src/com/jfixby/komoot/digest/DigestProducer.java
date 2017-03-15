@@ -1,7 +1,9 @@
 
-package com.jfixby.komoot.separator;
+package com.jfixby.komoot.digest;
 
 import com.jfixby.komoot.io.SrlzNotification;
+import com.jfixby.komoot.separator.Notification;
+import com.jfixby.komoot.separator.NotificationsSeparator;
 import com.jfixby.komoot.sns.FailedToReadNotificationJsonException;
 import com.jfixby.scarabei.api.collections.Collection;
 import com.jfixby.scarabei.api.collections.Collections;
