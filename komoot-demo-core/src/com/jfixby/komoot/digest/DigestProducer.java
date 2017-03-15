@@ -57,6 +57,7 @@ public class DigestProducer {
 	private long messagessProcessed = 0;
 	private final boolean deleteInputMessages = true;
 	private final long digestSendPeriod;
+	private final long waitMorePeriod = 10000;
 
 	public void start () {
 		this.state.expectState(DIGEST_PRODUCER_STATE.NEW);
@@ -79,12 +80,16 @@ public class DigestProducer {
 
 			final Collection<SQSMessage> messages = result.listMessages();
 			if (this.localMessagesQueue.size() >= this.owner.max_messages_per_digest) {// input overflow
-				this.processDigest();
+				this.tryToDropDigest();// drop a chunk
 			} else if (messages.size() == 0) {// no more input
-				// notifications
-				this.processDigest();
-				L.d("Digest[" + this + "] is going to sleep for " + this.timeValueString(this.digestSendPeriod) + " minutes");
-				Sys.sleep(this.digestSendPeriod);
+
+				final boolean done = this.tryToDropDigest();
+				if (done) {// sleep till next drop
+					L.d("Digest[" + this + "] is going to sleep for " + this.timeValueString(this.digestSendPeriod) + " minutes");
+					Sys.sleep(this.digestSendPeriod);
+				} else {// wait for messages
+					Sys.sleep(this.waitMorePeriod);
+				}
 			} else {// more input available
 				this.consumeMessages(messages);
 			}
@@ -106,9 +111,9 @@ public class DigestProducer {
 
 	}
 
-	private void processDigest () {
+	private boolean tryToDropDigest () {
 		if (this.localMessagesQueue.size() == 0) {// no digest
-			return;
+			return false;
 		}
 
 		final DigestEmailSpecs specs = new DigestEmailSpecs();
@@ -141,7 +146,7 @@ public class DigestProducer {
 				this.deleteProcessedMessages(processedMessages);
 			}
 		}
-
+		return true;
 	}
 
 	private void deleteProcessedMessages (final List<String> messagesToDelete) {
