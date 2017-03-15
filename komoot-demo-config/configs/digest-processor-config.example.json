@@ -2,6 +2,6 @@
   "digestBotEmailAdress": "example@example.com",
   "digestSleepBeforeStartTime": 10,
   "maxEventsPerDigest": 500,
-  "sqsMailboxPrefix": "kns-usr-nbox",
+  "sqsMailboxPrefix": "usr-nbox",
   "digestSendPeriod": 3600000
 }
