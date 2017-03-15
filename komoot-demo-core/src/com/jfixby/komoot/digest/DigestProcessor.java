@@ -58,6 +58,7 @@ public class DigestProcessor {
 		}
 
 	};
+	private final long emergencySleep = 10000;
 
 	public static DigestProcessorSpecs newDigestProcessorSpecs () {
 		return new DigestProcessorSpecs();
@@ -71,15 +72,21 @@ public class DigestProcessor {
 			currentQueues.print("current queues");
 		}
 		while (true) {
-			final Collection<String> currentQueues = this.listUserQueues();
+			Sys.sleep(10000);
+			try {
+				final Collection<String> currentQueues = this.listUserQueues();
 
-			final List<String> notRegistered = currentQueues.filter(q -> !this.queueRegistry.contains(q));
+				final List<String> notRegistered = currentQueues.filter(q -> !this.queueRegistry.contains(q));
 
-			for (final String q : notRegistered) {
-				this.register(q);
-			}
-			if (notRegistered.size() == 0) {
-				Sys.sleep(1000);
+				for (final String q : notRegistered) {
+					this.register(q);
+				}
+				if (notRegistered.size() == 0) {
+					Sys.sleep(1000);
+				}
+			} catch (final Throwable e) {
+				L.e(e);
+				Sys.sleep(this.emergencySleep);
 			}
 		}
 	}
@@ -92,12 +99,11 @@ public class DigestProcessor {
 
 	private void register (final String q) {
 		L.d("register queue", q);
-		this.queueRegistry.add(q);
 		final boolean isAlreadyProcessing = !this.digestProducers.ensureProcessing(q);
 		if (isAlreadyProcessing) {
 			L.e("queueRegistry is corupted", q);
 		}
-
+		this.queueRegistry.add(q);
 	}
 
 	public static DigestProcessor newDigestProcessor (final DigestProcessorSpecs specs) {
