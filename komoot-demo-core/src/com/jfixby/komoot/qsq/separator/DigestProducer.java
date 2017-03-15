@@ -103,6 +103,7 @@ public class DigestProducer {
 			final Notification notification = this.localMessagesQueue.getLast();
 			specs.setTo(notification.getEmail());
 			specs.setSubject("Komoot updates");
+
 		}
 
 		specs.setFrom(this.owner.getDigestBotEmailAdress());
@@ -112,7 +113,7 @@ public class DigestProducer {
 			emailToUser.addNotification(notification);
 		}
 		emailToUser.seal();
-		emailToUser.send();
+		emailToUser.send(this.owner.getMailClient());
 
 	}
 

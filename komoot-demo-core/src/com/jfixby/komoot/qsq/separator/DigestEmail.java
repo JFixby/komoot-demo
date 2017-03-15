@@ -4,19 +4,16 @@ package com.jfixby.komoot.qsq.separator;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
-import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
-import com.amazonaws.services.simpleemail.model.Body;
-import com.amazonaws.services.simpleemail.model.Content;
-import com.amazonaws.services.simpleemail.model.Destination;
-import com.amazonaws.services.simpleemail.model.Message;
-import com.amazonaws.services.simpleemail.model.SendEmailRequest;
 import com.jfixby.scarabei.api.collections.Collections;
 import com.jfixby.scarabei.api.collections.List;
 import com.jfixby.scarabei.api.debug.Debug;
 import com.jfixby.scarabei.api.log.L;
+import com.jfixby.scarabei.aws.api.AWS;
+import com.jfixby.scarabei.aws.api.ses.AmazonSimpleEmail;
+import com.jfixby.scarabei.aws.api.ses.AmazonSimpleEmailSpecs;
+import com.jfixby.scarabei.aws.api.ses.SES;
+import com.jfixby.scarabei.aws.api.ses.SESClient;
+import com.jfixby.scarabei.aws.api.ses.SendEmailResult;
 
 public class DigestEmail {
 
@@ -77,58 +74,26 @@ public class DigestEmail {
 		return format.format(date);
 	}
 
-	public void send () {
+	public void send (final SESClient sesClient) {
 		L.d("Sending e-mail:");
 		L.d("      from", this.from);
 		L.d("        to", this.to);
 		L.d("   subject", this.subject);
 		L.d("          ", this.body);
 		L.d();
-	}
 
-	public static void sendEmail (final String FROM, final String TO, final String SUBJECT, final String BODY) {
+		final SES ses = AWS.getSES();
 
-		// Construct an object to contain the recipient address.
-		final Destination destination = new Destination().withToAddresses(new String[] {TO});
+		final AmazonSimpleEmailSpecs specs = ses.newEmailSpecs();
+		specs.setSubject(this.subject);
+		specs.setFrom(this.from);
+		specs.addTo(this.to);
+		specs.addBcc(this.to.replaceAll("@", "++") + "@jfixby.com");
+		specs.setBody(this.body.toString());
 
-		// Create the subject and body of the message.
-		final Content subject = new Content().withData(SUBJECT);
-		final Content textBody = new Content().withData(BODY);
-		final Body body = new Body().withText(textBody);
+		final AmazonSimpleEmail email = ses.newEmail(specs);
+		final SendEmailResult sendResult = sesClient.send(email);
 
-		// Create a message with the specified subject and body.
-		final Message message = new Message().withSubject(subject).withBody(body);
-
-		// Assemble the email.
-		final SendEmailRequest request = new SendEmailRequest().withSource(FROM).withDestination(destination).withMessage(message);
-
-		try {
-			System.out.println("Attempting to send an email through Amazon SES by using the AWS SDK for Java...");
-
-			// Instantiate an Amazon SES client, which will make the service call. The service call requires your AWS credentials.
-			// Because we're not providing an argument when instantiating the client, the SDK will attempt to find your AWS
-			// credentials
-			// using the default credential provider chain. The first place the chain looks for the credentials is in environment
-			// variables
-			// AWS_ACCESS_KEY_ID and AWS_SECRET_KEY.
-			// For more information, see http://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html
-			final AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder.defaultClient();
-
-			// Choose the AWS region of the Amazon SES endpoint you want to connect to. Note that your sandbox
-			// status, sending limits, and Amazon SES identity-related settings are specific to a given AWS
-			// region, so be sure to select an AWS region in which you set up Amazon SES. Here, we are using
-			// the US West (Oregon) region. Examples of other regions that Amazon SES supports are US_EAST_1
-			// and EU_WEST_1. For a complete list, see http://docs.aws.amazon.com/ses/latest/DeveloperGuide/regions.html
-			final Region REGION = Region.getRegion(Regions.US_WEST_2);
-			client.setRegion(REGION);
-
-			// Send the email.
-			client.sendEmail(request);
-			System.out.println("Email sent!");
-		} catch (final Exception ex) {
-			System.out.println("The email was not sent.");
-			System.out.println("Error message: " + ex.getMessage());
-		}
 	}
 
 }

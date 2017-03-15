@@ -52,7 +52,7 @@ public class NotificationsSeparator {
 		Debug.checkEmpty("queueURL", this.inputQueueURL);
 
 		this.client = sqs.newClient(sqsspecs);
-		this.digestProducers = new DigestProducersPool(this.client, specs.getDigestBotEmailAdress());
+		this.digestProducers = new DigestProducersPool(this.client, specs.getDigestBotEmailAdress(), this.awsKeys);
 	}
 
 	public static NotificationsSeparatorSpecs newNotificationsSeparatorSpecs () {
