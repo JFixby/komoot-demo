@@ -8,7 +8,9 @@ import com.jfixby.scarabei.api.collections.Collections;
 import com.jfixby.scarabei.api.collections.Queue;
 import com.jfixby.scarabei.api.debug.Debug;
 import com.jfixby.scarabei.api.log.L;
+import com.jfixby.scarabei.api.math.FloatMath;
 import com.jfixby.scarabei.api.sys.Sys;
+import com.jfixby.scarabei.api.time.TimeStream;
 import com.jfixby.scarabei.api.util.JUtils;
 import com.jfixby.scarabei.api.util.StateSwitcher;
 import com.jfixby.scarabei.aws.api.AWS;
@@ -78,7 +80,7 @@ public class DigestProducer {
 			} else if (messages.size() == 0) {// no more input
 				// notifications
 				this.processDigest();
-				L.d("Digest[" + this + "] is going to sleep.");
+				L.d("Digest[" + this + "] is going to sleep for " + this.timeValueString(this.digestSendPeriod) + " minutes");
 				Sys.sleep(this.digestSendPeriod);
 				return;
 			}
@@ -93,6 +95,11 @@ public class DigestProducer {
 			}
 // Sys.sleep(150);
 		}
+	}
+
+	private String timeValueString (final long periodMS) {
+		return "" + FloatMath.roundToDigit(periodMS * 1f / TimeStream.MINUTE, 2);
+
 	}
 
 	private void processDigest () {
