@@ -40,6 +40,8 @@ public class NotificationsSeparator {
 	private SQSClient client;
 	private String inputQueueURL;
 	private final DigestProducersPool digestProducers;
+	private String notification_system_mailbox_prefix;
+	private long startDelay;
 
 	private NotificationsSeparator (final NotificationsSeparatorSpecs specs) {
 		this.awsKeys = specs.getAWSCredentialsProvider();
@@ -52,7 +54,11 @@ public class NotificationsSeparator {
 		Debug.checkEmpty("queueURL", this.inputQueueURL);
 
 		this.client = sqs.newClient(sqsspecs);
-		this.digestProducers = new DigestProducersPool(this.client, specs.getDigestBotEmailAdress(), this.awsKeys);
+		this.digestProducers = new DigestProducersPool(this.client, specs.getDigestBotEmailAdress(), this.awsKeys, specs);
+		this.startDelay = specs.getSeparatorStartProcessingDelay();
+		this.notification_system_mailbox_prefix = Debug.checkNull("SQSMailboxPrefix", specs.getSQSMailboxPrefix());
+		Debug.checkEmpty("SQSMailboxPrefix", specs.getSQSMailboxPrefix());
+		this.notification_system_mailbox_prefix = "nts-" + this.notification_system_mailbox_prefix;
 	}
 
 	public static NotificationsSeparatorSpecs newNotificationsSeparatorSpecs () {
@@ -73,10 +79,17 @@ public class NotificationsSeparator {
 	long messagessProcessed = 0;
 	boolean delopyPool = !false;
 
+	final QueueRegistry queueReg = new QueueRegistry();
+
 	private void separate () {
 		if (this.delopyPool) {
-			this.digestProducers.deployPool();
+			this.digestProducers.deployPool(this.notification_system_mailbox_prefix);
 		}
+		Sys.sleep(this.startDelay);
+		final Collection<String> allQueues = this.client.listAllSQSUrls()
+			.filter(val -> val.startsWith(this.notification_system_mailbox_prefix));
+		allQueues.print("allQueues");
+		this.queueReg.addExisting(allQueues);
 
 		L.d("Notifications separator is listening", this.inputQueueURL);
 		while (true) {
@@ -115,7 +128,6 @@ public class NotificationsSeparator {
 
 		final SQSCreateQueueResult queueCreateResult = this.client.createQueue(createQueueRequestParams);
 		final String queuURL = queueCreateResult.getQueueURL();
-		L.d("creating queue", queuURL);
 
 		final SQSSendMessageParams sendParams = sqs.newSendMessageParams();
 		sendParams.setQueueURL(queuURL);
@@ -147,7 +159,10 @@ public class NotificationsSeparator {
 
 		final SQSCreateQueueResult queueCreateResult = this.client.createQueue(createQueueRequestParams);
 		final String queuURL = queueCreateResult.getQueueURL();
-		L.d("creating queue", queuURL);
+		L.d("sorting message", queuURL);
+		L.d(Json.serializeToString(srlzd_notification));
+
+// L.d("creating queue", queuURL);
 
 		final SQSSendMessageParams sendParams = sqs.newSendMessageParams();
 		sendParams.setQueueURL(queuURL);
@@ -165,14 +180,12 @@ public class NotificationsSeparator {
 
 	}
 
-	public static final String MAILBOX_PREFIX = "komoot-usr-mailbox";
-
 	private String queueName (final String user_id) {
 		Debug.checkNull("user_id", user_id);
 		if (user_id == null) {
 			return null;
 		}
-		final String result = MAILBOX_PREFIX + "-"
+		final String result = this.notification_system_mailbox_prefix + "-"
 			+ user_id.replaceAll(":", "").replaceAll("@", "-").replaceAll("\\+", "-").replaceAll("\\.", "-");
 		return result;
 	}

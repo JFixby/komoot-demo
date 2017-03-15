@@ -39,6 +39,7 @@ public class DigestProducer {
 		this.owner = owner;
 		this.inputQueueURL = Debug.checkNull(queuURL);
 		this.localMessagesQueue = Collections.newQueue();
+
 	}
 
 	final Thread workerThread = new Thread() {
@@ -57,9 +58,8 @@ public class DigestProducer {
 		this.workerThread.start();
 	}
 
-	long max_messages_per_digest = 500;
-
 	private void work () {
+		Sys.sleep(this.owner.sleep_before_start);
 		L.d("Digest producer is listening", this.inputQueueURL);
 		final SQS sqs = AWS.getSQS();
 		while (true) {
@@ -72,7 +72,7 @@ public class DigestProducer {
 			final SQSReceiveMessageResult result = client.receive(request);
 
 			final Collection<SQSMessage> messages = result.listMessages();
-			if (this.localMessagesQueue.size() >= this.max_messages_per_digest) {
+			if (this.localMessagesQueue.size() >= this.owner.max_messages_per_digest) {
 				this.processDigest();
 			} else if (messages.size() == 0) {// no more input
 				// notifications
@@ -84,12 +84,13 @@ public class DigestProducer {
 			for (final SQSMessage m : messages) {
 				try {
 					this.processBody(m);
+// Sys.sleep(1500);
 				} catch (final FailedToReadNotificationJsonException e) {
 					L.e(e);
 				}
 
 			}
-			Sys.sleep(150);
+// Sys.sleep(150);
 		}
 	}
 
@@ -99,21 +100,26 @@ public class DigestProducer {
 		}
 
 		final DigestEmailSpecs specs = new DigestEmailSpecs();
-		{
+
+		if (!this.owner.debug) {
 			final Notification notification = this.localMessagesQueue.getLast();
 			specs.setTo(notification.getEmail());
-			specs.setSubject("Komoot updates");
-
+		} else {// debug mode
+			final Notification notification = this.localMessagesQueue.getLast();
+			specs.setTo(this.owner.debugWrapEmail(notification.getEmail()));
 		}
-
+		specs.setSubject("Komoot updates");
 		specs.setFrom(this.owner.getDigestBotEmailAdress());
+
 		final DigestEmail emailToUser = new DigestEmail(specs);
 		while (this.localMessagesQueue.size() > 0) {
 			final Notification notification = this.localMessagesQueue.dequeue();
 			emailToUser.addNotification(notification);
 		}
 		emailToUser.seal();
-		emailToUser.send(this.owner.getMailClient());
+		if (!this.owner.debug) {
+			emailToUser.send(this.owner.getMailClient());
+		}
 
 	}
 
@@ -134,7 +140,7 @@ public class DigestProducer {
 		final SQS sqs = AWS.getSQS();
 
 		this.localMessagesQueue.enqueue(notification);
-		L.d("received", notification);
+		L.d("received notification", notification);
 
 		this.messagessProcessed++;
 

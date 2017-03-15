@@ -44,6 +44,13 @@ public class DigestEmail {
 			this.body.append(formatDate(n.getTimeStamp()) + " " + n.getEventString());
 			this.body.append("\n");
 		}
+
+		L.d("Ready to send e-mail:");
+		L.d("      from", this.from);
+		L.d("        to", this.to);
+		L.d("   subject", this.subject);
+		L.d("          ", this.body);
+		L.d();
 	}
 
 	public static String formatDate (final long t) {
@@ -76,22 +83,12 @@ public class DigestEmail {
 
 	public void send (final SESClient sesClient) {
 
-		final String bcc = this.to.replaceAll("@", "++") + "@jfixby.com";
-		L.d("Sending e-mail:");
-		L.d("      from", this.from);
-		L.d("        to", this.to);
-		L.d("       bcc", bcc);
-		L.d("   subject", this.subject);
-		L.d("          ", this.body);
-		L.d();
-
 		final SES ses = AWS.getSES();
 
 		final AmazonSimpleEmailSpecs specs = ses.newEmailSpecs();
 		specs.setSubject(this.subject);
 		specs.setFrom(this.from);
 		specs.addTo(this.to);
-		specs.addBcc(bcc);
 		specs.setBody(this.body.toString());
 
 		final AmazonSimpleEmail email = ses.newEmail(specs);
