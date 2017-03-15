@@ -9,6 +9,7 @@ import com.jfixby.scarabei.api.collections.List;
 import com.jfixby.scarabei.api.debug.Debug;
 import com.jfixby.scarabei.api.err.Err;
 import com.jfixby.scarabei.api.log.L;
+import com.jfixby.scarabei.api.sys.Sys;
 import com.jfixby.scarabei.api.util.JUtils;
 import com.jfixby.scarabei.api.util.StateSwitcher;
 import com.jfixby.scarabei.aws.api.AWS;
@@ -64,26 +65,36 @@ public class DigestProcessor {
 	}
 
 	protected void process () {
+		L.d("Starting digest server");
+		{
+
+			final Collection<String> currentQueues = this.listUserQueues();
+			currentQueues.print("current queues");
+		}
 		while (true) {
-			final Collection<String> currentQueues = this.client.listAllSQSUrls()
-				.filter(val -> val.startsWith(this.notification_system_mailbox_prefix));
+			final Collection<String> currentQueues = this.listUserQueues();
 
 			final List<String> notRegistered = currentQueues.filter(q -> !this.queueRegistry.contains(q));
 
 			for (final String q : notRegistered) {
 				this.register(q);
 			}
+			if (notRegistered.size() == 0) {
+				Sys.sleep(1000);
+			}
 		}
-// this.digestProducers.deployPool(this.notification_system_mailbox_prefix);
-//
-// allQueues.print("allQueues");
-// this.queueReg.addExisting(allQueues);
+	}
+
+	private Collection<String> listUserQueues () {
+		final Collection<String> all = this.client.listAllSQSUrls();
+		final Collection<String> currentQueues = all.filter(val -> val.contains(this.notification_system_mailbox_prefix));
+		return currentQueues;
 	}
 
 	private void register (final String q) {
 		L.d("register queue", q);
 		this.queueRegistry.add(q);
-		final boolean isAlreadyProcessing = this.digestProducers.ensureProcessing(q);
+		final boolean isAlreadyProcessing = !this.digestProducers.ensureProcessing(q);
 		if (isAlreadyProcessing) {
 			L.e("queueRegistry is corupted", q);
 		}
