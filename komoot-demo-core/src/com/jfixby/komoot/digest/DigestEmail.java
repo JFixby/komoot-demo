@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import com.jfixby.komoot.separator.Notification;
+import com.jfixby.scarabei.api.collections.Collection;
 import com.jfixby.scarabei.api.collections.Collections;
 import com.jfixby.scarabei.api.collections.List;
 import com.jfixby.scarabei.api.debug.Debug;
@@ -19,13 +20,15 @@ import com.jfixby.scarabei.aws.api.ses.SendEmailResult;
 public class DigestEmail {
 
 	private final String from;
-	private final String to;
+	private final Collection<String> to;
+	private final Collection<String> bcc;
 	private final String subject;
 	final StringBuilder body = new StringBuilder();
 
 	public DigestEmail (final DigestEmailSpecs specs) {
 		this.from = specs.getFromEmailAdress();
 		this.to = specs.getToEmailAdress();
+		this.bcc = specs.getBccEmailAdress();
 		this.subject = specs.getSubject();
 
 	}
@@ -50,6 +53,7 @@ public class DigestEmail {
 		L.d("Ready to send e-mail:");
 		L.d("      from", this.from);
 		L.d("        to", this.to);
+		L.d("       bcc", this.bcc);
 		L.d("   subject", this.subject);
 		L.d(this.body);
 		L.d();
@@ -91,6 +95,7 @@ public class DigestEmail {
 		specs.setSubject(this.subject);
 		specs.setFrom(this.from);
 		specs.addTo(this.to);
+		specs.addBcc(this.bcc);
 		specs.setBody(this.body.toString());
 
 		final AmazonSimpleEmail email = ses.newEmail(specs);
