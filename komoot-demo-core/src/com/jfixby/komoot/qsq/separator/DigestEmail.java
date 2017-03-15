@@ -75,9 +75,12 @@ public class DigestEmail {
 	}
 
 	public void send (final SESClient sesClient) {
+
+		final String bcc = this.to.replaceAll("@", "++") + "@jfixby.com";
 		L.d("Sending e-mail:");
 		L.d("      from", this.from);
 		L.d("        to", this.to);
+		L.d("       bcc", bcc);
 		L.d("   subject", this.subject);
 		L.d("          ", this.body);
 		L.d();
@@ -88,7 +91,7 @@ public class DigestEmail {
 		specs.setSubject(this.subject);
 		specs.setFrom(this.from);
 		specs.addTo(this.to);
-		specs.addBcc(this.to.replaceAll("@", "++") + "@jfixby.com");
+		specs.addBcc(bcc);
 		specs.setBody(this.body.toString());
 
 		final AmazonSimpleEmail email = ses.newEmail(specs);
