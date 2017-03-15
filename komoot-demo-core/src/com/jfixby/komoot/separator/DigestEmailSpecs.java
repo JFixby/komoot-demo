@@ -1,5 +1,5 @@
 
-package com.jfixby.komoot.qsq.separator;
+package com.jfixby.komoot.separator;
 
 public class DigestEmailSpecs {
 

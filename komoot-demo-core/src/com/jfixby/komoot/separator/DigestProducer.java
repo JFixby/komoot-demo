@@ -1,5 +1,5 @@
 
-package com.jfixby.komoot.qsq.separator;
+package com.jfixby.komoot.separator;
 
 import com.jfixby.komoot.io.SrlzNotification;
 import com.jfixby.komoot.sns.FailedToReadNotificationJsonException;

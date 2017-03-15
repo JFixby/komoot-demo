@@ -3,8 +3,8 @@ package com.jfixby.komoot.demo.run;
 
 import java.util.Date;
 
-import com.jfixby.komoot.qsq.separator.DigestEmail;
-import com.jfixby.komoot.qsq.separator.Notification;
+import com.jfixby.komoot.separator.DigestEmail;
+import com.jfixby.komoot.separator.Notification;
 import com.jfixby.scarabei.amazon.aws.RedAWS;
 import com.jfixby.scarabei.api.desktop.ScarabeiDesktop;
 import com.jfixby.scarabei.api.json.Json;

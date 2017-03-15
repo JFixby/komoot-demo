@@ -1,5 +1,5 @@
 
-package com.jfixby.komoot.qsq.separator;
+package com.jfixby.komoot.separator;
 
 import com.jfixby.komoot.io.SrlzMessageBody;
 import com.jfixby.komoot.io.SrlzNotification;
@@ -32,20 +32,18 @@ public class NotificationsSeparator {
 
 	private NotificationsSeparator () {
 		Err.reportError("Invalid constructor");
-		this.digestProducers = null;
 	}
 
 	AWSCredentialsProvider awsKeys;
-	private StateSwitcher<SEPARATOR_STATE> state;
+	private StateSwitcher<PROCESSOR_STATE> state;
 	private SQSClient client;
 	private String inputQueueURL;
-	private final DigestProducersPool digestProducers;
 	private String notification_system_mailbox_prefix;
 	private long startDelay;
 
 	private NotificationsSeparator (final NotificationsSeparatorSpecs specs) {
 		this.awsKeys = specs.getAWSCredentialsProvider();
-		this.state = JUtils.newStateSwitcher(SEPARATOR_STATE.NEW);
+		this.state = JUtils.newStateSwitcher(PROCESSOR_STATE.NEW);
 		final SQS sqs = AWS.getSQS();
 		final SQSClienSpecs sqsspecs = sqs.newSQSClienSpecs();
 		this.awsKeys = Debug.checkNull("AWSCredentialsProvider", specs.getAWSCredentialsProvider());
@@ -54,7 +52,6 @@ public class NotificationsSeparator {
 		Debug.checkEmpty("queueURL", this.inputQueueURL);
 
 		this.client = sqs.newClient(sqsspecs);
-		this.digestProducers = new DigestProducersPool(this.client, specs.getDigestBotEmailAdress(), this.awsKeys, specs);
 		this.startDelay = specs.getSeparatorStartProcessingDelay();
 		this.notification_system_mailbox_prefix = Debug.checkNull("SQSMailboxPrefix", specs.getSQSMailboxPrefix());
 		Debug.checkEmpty("SQSMailboxPrefix", specs.getSQSMailboxPrefix());
@@ -77,19 +74,10 @@ public class NotificationsSeparator {
 
 	};
 	long messagessProcessed = 0;
-	boolean delopyPool = !false;
-
-	final QueueRegistry queueReg = new QueueRegistry();
 
 	private void separate () {
-		if (this.delopyPool) {
-			this.digestProducers.deployPool(this.notification_system_mailbox_prefix);
-		}
+
 		Sys.sleep(this.startDelay);
-		final Collection<String> allQueues = this.client.listAllSQSUrls()
-			.filter(val -> val.startsWith(this.notification_system_mailbox_prefix));
-		allQueues.print("allQueues");
-		this.queueReg.addExisting(allQueues);
 
 		L.d("Notifications separator is listening", this.inputQueueURL);
 		while (true) {
@@ -111,7 +99,7 @@ public class NotificationsSeparator {
 				}
 
 			}
-			Sys.sleep(150);
+// Sys.sleep(150);
 		}
 
 	}
@@ -121,7 +109,7 @@ public class NotificationsSeparator {
 		final String inputMessageBody = m.getBody();
 		final String inputMessageReceiptHandle = m.getReceiptHandle();
 
-		final String queueName = "komoot-usr-error";
+		final String queueName = "komoot-error";
 // L.d("new queue", queueName + " (" + queueName.length() + ")");
 		final SQSCreateQueueParams createQueueRequestParams = sqs.newCreateQueueParams();
 		createQueueRequestParams.setName(queueName);
@@ -176,8 +164,6 @@ public class NotificationsSeparator {
 		delete.setMessageReceiptHandle(inputMessageReceiptHandle);
 		final SQSDeleteMessageResult deleteResult = this.client.deleteMessage(delete);
 
-		this.digestProducers.ensureProcessing(queuURL);
-
 	}
 
 	private String queueName (final String user_id) {
@@ -215,8 +201,8 @@ public class NotificationsSeparator {
 	}
 
 	public void start () {
-		this.state.expectState(SEPARATOR_STATE.NEW);
-		this.state.switchState(SEPARATOR_STATE.RUNNING);
+		this.state.expectState(PROCESSOR_STATE.NEW);
+		this.state.switchState(PROCESSOR_STATE.RUNNING);
 		this.mainThread.start();
 	}
 }

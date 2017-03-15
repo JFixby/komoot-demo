@@ -6,7 +6,7 @@ import java.io.IOException;
 import com.jfixby.komoot.demo.credentials.AWSCredentials;
 import com.jfixby.komoot.io.SrlzMessageBody;
 import com.jfixby.komoot.io.SrlzNotification;
-import com.jfixby.komoot.qsq.separator.NotificationsSeparator;
+import com.jfixby.komoot.separator.NotificationsSeparator;
 import com.jfixby.komoot.sns.FailedToReadNotificationJsonException;
 import com.jfixby.scarabei.amazon.aws.RedAWS;
 import com.jfixby.scarabei.api.collections.Collection;

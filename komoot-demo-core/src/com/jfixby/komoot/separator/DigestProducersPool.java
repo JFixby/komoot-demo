@@ -1,11 +1,10 @@
 
-package com.jfixby.komoot.qsq.separator;
+package com.jfixby.komoot.separator;
 
-import com.jfixby.scarabei.api.collections.Collection;
+import com.jfixby.komoot.digest.DigestProcessorSpecs;
 import com.jfixby.scarabei.api.collections.Collections;
 import com.jfixby.scarabei.api.collections.Map;
 import com.jfixby.scarabei.api.debug.Debug;
-import com.jfixby.scarabei.api.log.L;
 import com.jfixby.scarabei.api.math.IntegerMath;
 import com.jfixby.scarabei.aws.api.AWS;
 import com.jfixby.scarabei.aws.api.AWSCredentialsProvider;
@@ -26,7 +25,7 @@ public class DigestProducersPool {
 	public long max_messages_per_digest;
 
 	public DigestProducersPool (final SQSClient client, final String digestBotEmailAdress, final AWSCredentialsProvider awsKeys,
-		final NotificationsSeparatorSpecs specs) {
+		final DigestProcessorSpecs specs) {
 		this.client = client;
 		this.digestBotEmailAdress = Debug.checkNull("digestBotEmailAdress", digestBotEmailAdress);
 		Debug.checkEmpty("digestBotEmailAdress", digestBotEmailAdress);
@@ -48,14 +47,15 @@ public class DigestProducersPool {
 		return this.mailClient;
 	}
 
-	public void ensureProcessing (final String queuURL) {
+	public boolean ensureProcessing (final String queuURL) {
 		DigestProducer producer = this.pool.get(queuURL);
 		if (producer != null) {
-			return;
+			return false;
 		}
 		producer = new DigestProducer(queuURL, this);
 		this.pool.put(queuURL, producer);
 		producer.start();
+		return true;
 	}
 
 	public SQSClient getSQSClient () {
@@ -64,18 +64,6 @@ public class DigestProducersPool {
 
 	public String getDigestBotEmailAdress () {
 		return this.digestBotEmailAdress;
-	}
-
-	public void deployPool (final String prefix) {
-		L.d("Deploy digest pool");
-		final Collection<String> allQueues = this.client.listAllSQSUrls().filter(val -> val.startsWith(prefix));
-// allQueues.print("allQueues");
-
-		for (final String q : allQueues) {
-			this.ensureProcessing(q);
-		}
-
-// Sys.exit();
 	}
 
 	public static String debugWrapEmail (final String inputEmail, final String debugEmailSender, final String debugEmailDomain) {
