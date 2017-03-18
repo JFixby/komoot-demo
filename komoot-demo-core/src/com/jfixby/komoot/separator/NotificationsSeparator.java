@@ -12,6 +12,7 @@ import com.jfixby.scarabei.api.json.Json;
 import com.jfixby.scarabei.api.log.L;
 import com.jfixby.scarabei.api.md5.MD5;
 import com.jfixby.scarabei.api.sys.Sys;
+import com.jfixby.scarabei.api.time.TimeStream;
 import com.jfixby.scarabei.api.util.JUtils;
 import com.jfixby.scarabei.api.util.StateSwitcher;
 import com.jfixby.scarabei.aws.api.AWS;
@@ -75,6 +76,7 @@ public class NotificationsSeparator {
 
 	};
 	long messagessProcessed = 0;
+	private final long emergencySleep = TimeStream.HOUR / 3;
 
 	private void separate () {
 
@@ -82,23 +84,30 @@ public class NotificationsSeparator {
 
 		L.d("Notifications separator is listening", this.inputQueueURL);
 		while (true) {
-			final SQS sqs = AWS.getSQS();
-			final SQSReceiveMessageParams params = sqs.newReceiveMessageParams();
-			params.setQueueURL(this.inputQueueURL);
-			final SQSReceiveMessageRequest request = sqs.newReceiveMessageRequest(params);
+			try {
+				final SQS sqs = AWS.getSQS();
+				final SQSReceiveMessageParams params = sqs.newReceiveMessageParams();
+				params.setQueueURL(this.inputQueueURL);
+				final SQSReceiveMessageRequest request = sqs.newReceiveMessageRequest(params);
 
-			final SQSReceiveMessageResult result = this.client.receive(request);
+				final SQSReceiveMessageResult result = this.client.receive(request);
 
-			final Collection<SQSMessage> messages = result.listMessages();
-			for (final SQSMessage m : messages) {
+				final Collection<SQSMessage> messages = result.listMessages();
+				for (final SQSMessage m : messages) {
 // m.print();
-				try {
-					this.processBody(m);
-				} catch (final FailedToReadNotificationJsonException e) {
-					L.e(e);
-					this.reportBadMessage(m);
-				}
+					try {
+						this.processBody(m);
+					} catch (final FailedToReadNotificationJsonException e) {
+						L.e(e);
+						this.reportBadMessage(m);
+					}
 
+				}
+			} catch (final Throwable e) {
+				L.e(e);
+				Sys.sleep(this.emergencySleep);
+			} finally {
+				L.d("      retry");
 			}
 // Sys.sleep(150);
 		}
