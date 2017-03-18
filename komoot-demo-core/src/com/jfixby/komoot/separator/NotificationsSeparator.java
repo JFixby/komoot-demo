@@ -107,7 +107,8 @@ public class NotificationsSeparator {
 				L.e(e);
 				Sys.sleep(this.emergencySleep);
 			} finally {
-				L.d("      retry");
+				Sys.sleep(1000);
+// L.d(" retry");
 			}
 // Sys.sleep(150);
 		}

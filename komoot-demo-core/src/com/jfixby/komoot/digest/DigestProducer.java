@@ -70,28 +70,33 @@ public class DigestProducer {
 		L.d("Digest producer is listening", this.inputQueueURL);
 		final SQS sqs = AWS.getSQS();
 		while (true) {
+			try {
 
-			final SQSReceiveMessageParams params = sqs.newReceiveMessageParams();
-			params.setQueueURL(this.inputQueueURL);
-			final SQSReceiveMessageRequest request = sqs.newReceiveMessageRequest(params);
+				final SQSReceiveMessageParams params = sqs.newReceiveMessageParams();
+				params.setQueueURL(this.inputQueueURL);
+				final SQSReceiveMessageRequest request = sqs.newReceiveMessageRequest(params);
 
-			final SQSClient client = this.owner.getSQSClient();
-			final SQSReceiveMessageResult result = client.receive(request);
+				final SQSClient client = this.owner.getSQSClient();
+				final SQSReceiveMessageResult result = client.receive(request);
 
-			final Collection<SQSMessage> messages = result.listMessages();
-			if (this.localMessagesQueue.size() >= this.owner.max_messages_per_digest) {// input overflow
-				this.tryToDropDigest();// drop a chunk
-			} else if (messages.size() == 0) {// no more input
+				final Collection<SQSMessage> messages = result.listMessages();
+				if (this.localMessagesQueue.size() >= this.owner.max_messages_per_digest) {// input overflow
+					this.tryToDropDigest();// drop a chunk
+				} else if (messages.size() == 0) {// no more input
 
-				final boolean done = this.tryToDropDigest();
-				if (done) {// sleep till next drop
-					L.d("Digest[" + this + "] is going to sleep for " + this.timeValueString(this.digestSendPeriod) + " minutes");
-					Sys.sleep(this.digestSendPeriod);
-				} else {// wait for messages
-					Sys.sleep(this.waitMorePeriod);
+					final boolean done = this.tryToDropDigest();
+					if (done) {// sleep till next drop
+						L.d("Digest[" + this + "] is going to sleep for " + this.timeValueString(this.digestSendPeriod) + " minutes");
+						Sys.sleep(this.digestSendPeriod);
+					} else {// wait for messages
+						Sys.sleep(this.waitMorePeriod);
+					}
+				} else {// more input available
+					this.consumeMessages(messages);
 				}
-			} else {// more input available
-				this.consumeMessages(messages);
+			} catch (final Throwable r) {
+				L.e(r);
+				Sys.sleep(this.waitMorePeriod);
 			}
 		}
 	}
