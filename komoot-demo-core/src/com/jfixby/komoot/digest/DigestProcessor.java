@@ -72,7 +72,7 @@ public class DigestProcessor {
 			currentQueues.print("current queues");
 		}
 		while (true) {
-			Sys.sleep(10000);
+			Sys.sleep(1000);
 			try {
 				final Collection<String> currentQueues = this.listUserQueues();
 
