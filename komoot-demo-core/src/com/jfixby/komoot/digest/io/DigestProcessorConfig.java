@@ -7,4 +7,5 @@ public class DigestProcessorConfig {
 	public long maxEventsPerDigest;
 	public String sqsMailboxPrefix = "";
 	public long digestSendPeriod;
+	public boolean debugMode;
 }

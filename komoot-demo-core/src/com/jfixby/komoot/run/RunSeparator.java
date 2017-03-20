@@ -39,7 +39,7 @@ public class RunSeparator {
 		specs.setInputQueueURL(separatorConfig.inputQueueURL);
 
 		specs.setAWSCredentialsProvider(awsKeys);
-		specs.setDebugMode(true);
+		specs.setDebugMode(separatorConfig.debugMode);
 		specs.setSQSMailboxPrefix(separatorConfig.sqsMailboxPrefix);
 		specs.setSeparatorStartProcessingDelay(separatorConfig.separatorStartProcessingDelay);
 		final NotificationsSeparator separator = NotificationsSeparator.newNotificationsSeparator(specs);

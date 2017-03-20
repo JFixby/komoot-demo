@@ -45,7 +45,7 @@ public class RunDigestProcessor {
 		specs.setDigestBotEmailAdress(digestConfig.digestBotEmailAdress);
 
 		specs.setAWSCredentialsProvider(awsKeys);
-		specs.setDebugMode(true);
+		specs.setDebugMode(digestConfig.debugMode);
 		specs.setDebugEmailDomain("jfixby.com");
 		specs.setDebugEmailSender("komoot");
 		specs.setDigestSendPeriod(digestConfig.digestSendPeriod);

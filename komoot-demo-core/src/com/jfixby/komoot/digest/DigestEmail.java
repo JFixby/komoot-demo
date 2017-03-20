@@ -1,13 +1,11 @@
 
 package com.jfixby.komoot.digest;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import com.jfixby.komoot.separator.Notification;
+import com.jfixby.komoot.separator.NotificationTimestamp;
 import com.jfixby.scarabei.api.collections.Collection;
 import com.jfixby.scarabei.api.collections.Collections;
-import com.jfixby.scarabei.api.collections.List;
+import com.jfixby.scarabei.api.collections.Set;
 import com.jfixby.scarabei.api.debug.Debug;
 import com.jfixby.scarabei.api.log.L;
 import com.jfixby.scarabei.aws.api.AWS;
@@ -33,7 +31,7 @@ public class DigestEmail {
 
 	}
 
-	final List<Notification> list = Collections.newList();
+	final Set<Notification> list = Collections.newSet();
 
 	public void addNotification (final Notification notification) {
 		Debug.checkNull("notification", notification);
@@ -45,7 +43,10 @@ public class DigestEmail {
 		this.body.append("Hi, " + this.list.getLast().getUserName() + " your friends are active!");
 		this.body.append("\n");
 		this.body.append("\n");
-		for (final Notification n : this.list) {
+
+		final Set<Notification> sorted = Collections.newSet(this.list);
+		sorted.sort( (a, b) -> Long.compare(a.getTimeStamp().getTime(), b.getTimeStamp().getTime()));
+		for (final Notification n : sorted) {
 			this.body.append(formatDate(n.getTimeStamp()) + " " + n.getEventString());
 			this.body.append("\n");
 		}
@@ -59,8 +60,8 @@ public class DigestEmail {
 		L.d();
 	}
 
-	public static String formatDate (final long t) {
-		return padRight(padRight(day(t) + ",", 8) + " " + time(t), 20);
+	public static String formatDate (final NotificationTimestamp t) {
+		return padRight(padRight(t.day() + ",", 8) + " " + t.time(), 20);
 	}
 
 	public static String fixedLengthString (final String string, final int length) {
@@ -73,18 +74,6 @@ public class DigestEmail {
 
 	public static String padLeft (final String s, final int n) {
 		return String.format("%1$" + n + "s", s);
-	}
-
-	public static String day (final long timestamp) {
-		final Date date = new Date(timestamp);
-		final SimpleDateFormat format = new SimpleDateFormat("EEEE");
-		return format.format(date);
-	}
-
-	public static String time (final long timestamp) {
-		final Date date = new Date(timestamp);
-		final SimpleDateFormat format = new SimpleDateFormat("HH:mm");
-		return format.format(date);
 	}
 
 	public void send (final SESClient sesClient) {

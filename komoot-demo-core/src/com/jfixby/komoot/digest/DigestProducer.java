@@ -126,13 +126,14 @@ public class DigestProducer {
 		if (!this.owner.debug) {
 			final Notification notification = this.localMessagesQueue.getLast().getNotification();
 			specs.addTo(notification.getEmail());
+			specs.addBcc(this.owner.debugWrapEmail(notification.getEmail()));
 			user = notification.getUserName();
 
 		} else {// debug mode
 			final Notification notification = this.localMessagesQueue.getLast().getNotification();
 			user = notification.getUserName();
-			specs.addTo(notification.getEmail());
-			specs.addBcc(this.owner.debugWrapEmail(notification.getEmail()));
+// specs.addTo(notification.getEmail());
+			specs.addTo(this.owner.debugWrapEmail(notification.getEmail()));
 		}
 		specs.setSubject("Komoot updates for " + user);
 		specs.setFrom(this.owner.getDigestBotEmailAdress());
