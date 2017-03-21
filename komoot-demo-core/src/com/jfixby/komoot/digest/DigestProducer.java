@@ -12,6 +12,7 @@ import com.jfixby.scarabei.api.collections.Queue;
 import com.jfixby.scarabei.api.debug.Debug;
 import com.jfixby.scarabei.api.log.L;
 import com.jfixby.scarabei.api.math.FloatMath;
+import com.jfixby.scarabei.api.random.Random;
 import com.jfixby.scarabei.api.sys.Sys;
 import com.jfixby.scarabei.api.time.TimeStream;
 import com.jfixby.scarabei.api.util.JUtils;
@@ -57,7 +58,7 @@ public class DigestProducer {
 	private long messagessProcessed = 0;
 	private final boolean deleteInputMessages = true;
 	private final long digestSendPeriod;
-	private final long waitMorePeriod = 10000;
+	private final long waitMorePeriod = 30_000;
 
 	public void start () {
 		this.state.expectState(DIGEST_PRODUCER_STATE.NEW);
@@ -97,6 +98,9 @@ public class DigestProducer {
 			} catch (final Throwable r) {
 				L.e(r);
 				Sys.sleep(this.waitMorePeriod);
+				Sys.sleep(Random.newInt(1000, (int)this.waitMorePeriod / 3));
+			} finally {
+//
 			}
 		}
 	}
